@@ -140,7 +140,7 @@ export default function AdminOrders({ orders: initialOrders }: Props) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600 text-sm">
-                      {formatDate(order.created_at)}
+                      {order.created_at ? formatDate(order.created_at) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <select
