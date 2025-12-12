@@ -126,7 +126,7 @@ export default function BulkProductUpload({ themeId, onUpdate, onMessage, onClos
           continue
         }
 
-        // Create product in database
+        // Create product in database - usando apenas colunas básicas
         const { data, error } = await supabase
           .from('demo_products')
           .insert({
@@ -134,15 +134,16 @@ export default function BulkProductUpload({ themeId, onUpdate, onMessage, onClos
             name: product.name,
             price: parseFloat(product.price),
             image_url: imageUrl,
-            stock: 100,
-            is_active: true,
-            is_featured: false,
-            sort_order: existingProducts.length + newProducts.length
+            is_active: true
           })
           .select()
           .single()
 
-        if (error) throw error
+        if (error) {
+          console.error('Supabase error:', error)
+          updateProduct(product.id, { uploading: false, error: error.message })
+          continue
+        }
 
         newProducts.push(data as DemoProduct)
         updateProduct(product.id, { uploading: false, uploaded: true })

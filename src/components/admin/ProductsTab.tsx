@@ -112,7 +112,8 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
 
     setSaving(true)
     try {
-      const productData = {
+      // Dados básicos que certamente existem na tabela
+      const productData: Record<string, unknown> = {
         theme_id: themeId,
         name: form.name,
         description: form.description || null,
@@ -120,13 +121,7 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
         original_price: form.original_price ? parseFloat(form.original_price) : null,
         image_url: form.image_url,
         category: form.category || null,
-        badge: form.badge || null,
-        sku: form.sku || null,
-        stock: parseInt(form.stock) || 100,
-        is_featured: form.is_featured,
-        variations: form.variations,
-        is_active: true,
-        sort_order: editingProduct ? editingProduct.sort_order : products.length
+        is_active: true
       }
 
       if (editingProduct) {
@@ -137,7 +132,11 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
           .select()
           .single()
 
-        if (error) throw error
+        if (error) {
+          console.error('Supabase error:', error)
+          onMessage('error', `Erro: ${error.message}`)
+          return
+        }
         onUpdate(products.map(p => p.id === editingProduct.id ? data as DemoProduct : p))
         onMessage('success', 'Produto atualizado!')
       } else {
@@ -147,7 +146,11 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
           .select()
           .single()
 
-        if (error) throw error
+        if (error) {
+          console.error('Supabase error:', error)
+          onMessage('error', `Erro: ${error.message}`)
+          return
+        }
         onUpdate([...products, data as DemoProduct])
         onMessage('success', 'Produto adicionado!')
       }
