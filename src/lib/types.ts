@@ -98,7 +98,7 @@ export type Order = {
   customer_name: string
   customer_email: string
   notes?: string
-  status?: 'pending' | 'paid' | 'delivered'
+  status?: 'pending' | 'paid' | 'cancelled' | 'delivered'
   created_at?: string
   // Campo virtual (join com themes)
   themes?: { name: string }
