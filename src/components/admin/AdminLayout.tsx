@@ -118,7 +118,7 @@ export default function AdminLayout({ children, title }: Props) {
         )}
 
         {/* Main Content */}
-        <main className="lg:pl-56 pt-14 lg:pt-0 min-h-screen">
+        <main className="lg:pl-56 pt-14 lg:pt-6 min-h-screen">
           <div className="p-4 lg:p-6 max-w-7xl mx-auto">
             {children}
           </div>
