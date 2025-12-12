@@ -1,0 +1,13 @@
+// Exporta todos os componentes da plataforma
+export { default as Header } from './Header'
+export { default as StoreInfo } from './StoreInfo'
+export { default as CategoriesBar } from './CategoriesBar'
+export { default as ProductsSection } from './ProductsSection'
+export { default as ReviewsSection } from './ReviewsSection'
+export { default as Footer } from './Footer'
+export { default as ThemeStyle } from './ThemeStyle'
+export { default as PlatformMockLayout } from './PlatformMockLayout'
+export { default as CatalogPage } from './CatalogPage'
+export { default as HomePage } from './HomePage'
+export { default as ProductCard } from './ProductCard'
+export { default as ProductModal } from './ProductModal'

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tema Base - Guia de Estilo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1f2937;
+      background: #f9fafb;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      font-size: 1.25rem;
+      margin-bottom: 3rem;
+    }
+
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .section h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #1f2937;
+    }
+
+    /* Paleta de Cores */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .color-card {
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .color-sample {
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .color-info {
+      padding: 1rem;
+      background: #f9fafb;
+    }
+
+    .color-name {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .color-code {
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    /* Tipografia */
+    .type-samples {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .type-sample {
+      padding: 1.5rem;
+      background: #f9fafb;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    /* Botões */
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #4b5563;
+      border: 2px solid #e5e7eb;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    /* Gradiente */
+    .gradient-sample {
+      height: 200px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    /* Cards */
+    .card-samples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .demo-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .demo-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(102,126,234,0.15);
+      border-color: #667eea;
+    }
+
+    .demo-card-image {
+      height: 150px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 3rem;
+    }
+
+    .demo-card-content {
+      padding: 1.25rem;
+    }
+
+    .demo-card h3 {
+      margin-bottom: 0.5rem;
+      color: #1f2937;
+    }
+
+    .demo-card p {
+      color: #6b7280;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+
+    .demo-card .price {
+      color: #667eea;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    /* Espaçamentos */
+    .spacing-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .spacing-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .spacing-box {
+      background: #667eea;
+      height: 40px;
+      border-radius: 4px;
+    }
+
+    .spacing-label {
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    /* Code snippet */
+    .code {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 1rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      overflow-x: auto;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tema Base - Guia de Estilo</h1>
+    <p class="subtitle">Design System do tema padrão Vizzutemas</p>
+
+    <!-- Paleta de Cores -->
+    <div class="section">
+      <h2>🎨 Paleta de Cores</h2>
+      <div class="color-grid">
+        <div class="color-card">
+          <div class="color-sample" style="background: #667eea;">Primary</div>
+          <div class="color-info">
+            <div class="color-name">Primary</div>
+            <div class="color-code">#667eea</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-sample" style="background: #764ba2;">Secondary</div>
+          <div class="color-info">
+            <div class="color-name">Secondary</div>
+            <div class="color-code">#764ba2</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-sample" style="background: #1f2937;">Dark</div>
+          <div class="color-info">
+            <div class="color-name">Dark</div>
+            <div class="color-code">#1f2937</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-sample" style="background: #f9fafb; color: #1f2937;">Light</div>
+          <div class="color-info">
+            <div class="color-name">Light</div>
+            <div class="color-code">#f9fafb</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Gradiente Principal</h3>
+      <div class="gradient-sample">
+        linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+      </div>
+      <div class="code">background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);</div>
+    </div>
+
+    <!-- Tipografia -->
+    <div class="section">
+      <h2>✍️ Tipografia</h2>
+      <div class="type-samples">
+        <div class="type-sample">
+          <div style="font-size: 3rem; font-weight: 800;">Heading 1</div>
+          <div class="color-code">font-size: 3rem; font-weight: 800;</div>
+        </div>
+        <div class="type-sample">
+          <div style="font-size: 2.5rem; font-weight: 800;">Heading 2</div>
+          <div class="color-code">font-size: 2.5rem; font-weight: 800;</div>
+        </div>
+        <div class="type-sample">
+          <div style="font-size: 2rem; font-weight: 700;">Heading 3</div>
+          <div class="color-code">font-size: 2rem; font-weight: 700;</div>
+        </div>
+        <div class="type-sample">
+          <div style="font-size: 1.125rem;">Body Text - Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+          <div class="color-code">font-size: 1.125rem; line-height: 1.8;</div>
+        </div>
+        <div class="type-sample">
+          <div style="font-size: 0.875rem; color: #6b7280;">Small Text - Informações secundárias e labels</div>
+          <div class="color-code">font-size: 0.875rem; color: #6b7280;</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botões -->
+    <div class="section">
+      <h2>🔘 Botões</h2>
+      <div class="button-grid">
+        <button class="btn btn-primary">Botão Primário</button>
+        <button class="btn btn-secondary">Botão Secundário</button>
+      </div>
+      <div class="code">
+/* Botão Primário */
+.btn-primary {
+  background: #667eea;
+  color: #ffffff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+}
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="section">
+      <h2>🃏 Cards de Produto</h2>
+      <div class="card-samples">
+        <div class="demo-card">
+          <div class="demo-card-image">🎨</div>
+          <div class="demo-card-content">
+            <h3>Nome do Produto</h3>
+            <p>Descrição breve do produto com características principais.</p>
+            <div class="price">R$ 99,90</div>
+          </div>
+        </div>
+        <div class="demo-card">
+          <div class="demo-card-image">🖼️</div>
+          <div class="demo-card-content">
+            <h3>Outro Produto</h3>
+            <p>Mais uma descrição interessante sobre o produto.</p>
+            <div class="price">R$ 149,90</div>
+          </div>
+        </div>
+      </div>
+      <div class="code">
+.product-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(102,126,234,0.15);
+  border-color: #667eea;
+}
+      </div>
+    </div>
+
+    <!-- Espaçamentos -->
+    <div class="section">
+      <h2>📏 Espaçamentos</h2>
+      <div class="spacing-grid">
+        <div class="spacing-item">
+          <div class="spacing-box" style="width: 32px;"></div>
+          <span class="spacing-label">0.5rem / 8px - Espaço mínimo</span>
+        </div>
+        <div class="spacing-item">
+          <div class="spacing-box" style="width: 64px;"></div>
+          <span class="spacing-label">1rem / 16px - Espaço pequeno</span>
+        </div>
+        <div class="spacing-item">
+          <div class="spacing-box" style="width: 96px;"></div>
+          <span class="spacing-label">1.5rem / 24px - Espaço médio</span>
+        </div>
+        <div class="spacing-item">
+          <div class="spacing-box" style="width: 128px;"></div>
+          <span class="spacing-label">2rem / 32px - Espaço grande</span>
+        </div>
+        <div class="spacing-item">
+          <div class="spacing-box" style="width: 192px;"></div>
+          <span class="spacing-label">3rem / 48px - Espaço extra grande</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bordas -->
+    <div class="section">
+      <h2>⬜ Bordas e Sombras</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+        <div style="padding: 2rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <strong>Small</strong>
+          <div class="code" style="margin-top: 0.5rem;">border-radius: 6px;
+box-shadow: 0 1px 3px rgba(0,0,0,0.1);</div>
+        </div>
+        <div style="padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <strong>Medium</strong>
+          <div class="code" style="margin-top: 0.5rem;">border-radius: 8px;
+box-shadow: 0 2px 8px rgba(0,0,0,0.1);</div>
+        </div>
+        <div style="padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(102,126,234,0.15);">
+          <strong>Large</strong>
+          <div class="code" style="margin-top: 0.5rem;">border-radius: 12px;
+box-shadow: 0 10px 25px rgba(102,126,234,0.15);</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
