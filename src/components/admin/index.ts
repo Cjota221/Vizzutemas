@@ -1,0 +1,7 @@
+export { default as StoreConfigTab } from './StoreConfigTab'
+export { default as ProductsTab } from './ProductsTab'
+export { default as BannersTab } from './BannersTab'
+export { default as ButtonsTab } from './ButtonsTab'
+export { default as SectionsTab } from './SectionsTab'
+export { default as DeliveryTab } from './DeliveryTab'
+export { default as PaymentsTab } from './PaymentsTab'

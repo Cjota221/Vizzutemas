@@ -18,9 +18,12 @@ import {
   getCssByPage,
   upsertCssByPage
 } from '@/lib/supabase/themes'
+import { getProducts, getStoreConfig, getDemoBanners, getHomeSections, getStoreButtons } from '@/lib/supabase/store'
 import type { Theme, ThemeWidget, ThemeBanner, ColorConfig, PageType } from '@/lib/types'
+import type { DemoProduct, StoreConfig, DemoBanner, HomeSection, StoreButton } from '@/lib/supabase/store'
+import { ProductsTab, BannersTab, ButtonsTab, SectionsTab, DeliveryTab, PaymentsTab } from '@/components/admin'
 
-type TabType = 'info' | 'cores' | 'banners' | 'widgets' | 'css'
+type TabType = 'info' | 'cores' | 'produtos' | 'banners' | 'secoes' | 'botoes' | 'entrega' | 'pagamentos' | 'widgets' | 'css'
 
 // Cores padrão - exatamente como na plataforma
 const defaultColors: ColorConfig = {
@@ -108,6 +111,14 @@ export default function EditThemePage() {
   const [banners, setBanners] = useState<ThemeBanner[]>([])
   const [editingBanner, setEditingBanner] = useState<ThemeBanner | null>(null)
   const [newBanner, setNewBanner] = useState({ name: '', image_desktop: '', image_mobile: '', link_url: '' })
+  
+  // Estados para as novas abas
+  const [products, setProducts] = useState<DemoProduct[]>([])
+  const [demoBanners, setDemoBanners] = useState<DemoBanner[]>([])
+  const [homeSections, setHomeSections] = useState<HomeSection[]>([])
+  const [storeButtons, setStoreButtons] = useState<StoreButton[]>([])
+  const [deliveryOptions, setDeliveryOptions] = useState<any[]>([])
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
 
   useEffect(() => {
     if (id && typeof id === 'string') loadData(id)
@@ -116,9 +127,25 @@ export default function EditThemePage() {
   async function loadData(themeId: string) {
     try {
       setLoading(true)
-      const [themeData, widgetsData, bannersData] = await Promise.all([
-        getThemeById(themeId), getWidgetsByTheme(themeId), getBannersByTheme(themeId)
+      const [themeData, widgetsData, bannersData, productsData, demoBannersData, sectionsData, buttonsData, deliveryData, paymentsData] = await Promise.all([
+        getThemeById(themeId), 
+        getWidgetsByTheme(themeId), 
+        getBannersByTheme(themeId),
+        getProducts(themeId),
+        getDemoBanners(themeId),
+        getHomeSections(themeId),
+        getStoreButtons(themeId),
+        supabase.from('delivery_options').select('*').eq('theme_id', themeId).then(r => r.data || []),
+        supabase.from('payment_methods').select('*').eq('theme_id', themeId).then(r => r.data || [])
       ])
+      
+      setProducts(productsData || [])
+      setDemoBanners(demoBannersData || [])
+      setHomeSections(sectionsData || [])
+      setStoreButtons(buttonsData || [])
+      setDeliveryOptions(deliveryData || [])
+      setPaymentMethods(paymentsData || [])
+      
       if (themeData) {
         setTheme(themeData)
         setName(themeData.name)
@@ -358,11 +385,16 @@ export default function EditThemePage() {
   if (!theme) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-600">Tema não encontrado</div></div>
 
   const tabs: { id: TabType; label: string }[] = [
-    { id: 'info', label: 'Informações' },
-    { id: 'cores', label: 'Paleta de Cores' },
-    { id: 'banners', label: 'Banners' },
-    { id: 'widgets', label: 'Widgets' },
-    { id: 'css', label: 'CSS Global' }
+    { id: 'info', label: '📋 Info' },
+    { id: 'cores', label: '🎨 Cores' },
+    { id: 'produtos', label: '📦 Produtos' },
+    { id: 'banners', label: '🖼️ Banners' },
+    { id: 'secoes', label: '📐 Seções' },
+    { id: 'botoes', label: '🎛️ Botões' },
+    { id: 'entrega', label: '🚚 Entrega' },
+    { id: 'pagamentos', label: '💳 Pagamentos' },
+    { id: 'widgets', label: '🧩 Widgets' },
+    { id: 'css', label: '💻 CSS' }
   ]
 
   return (
@@ -624,6 +656,52 @@ export default function EditThemePage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Novas Abas */}
+        {activeTab === 'produtos' && (
+          <ProductsTab 
+            themeId={theme.id}
+            products={products}
+            onUpdate={setProducts}
+            onMessage={showMessage}
+          />
+        )}
+
+        {activeTab === 'secoes' && (
+          <SectionsTab
+            themeId={theme.id}
+            sections={homeSections}
+            onUpdate={setHomeSections}
+            onMessage={showMessage}
+          />
+        )}
+
+        {activeTab === 'botoes' && (
+          <ButtonsTab
+            themeId={theme.id}
+            buttons={storeButtons}
+            onUpdate={setStoreButtons}
+            onMessage={showMessage}
+          />
+        )}
+
+        {activeTab === 'entrega' && (
+          <DeliveryTab
+            themeId={theme.id}
+            options={deliveryOptions}
+            onUpdate={setDeliveryOptions}
+            onMessage={showMessage}
+          />
+        )}
+
+        {activeTab === 'pagamentos' && (
+          <PaymentsTab
+            themeId={theme.id}
+            methods={paymentMethods}
+            onUpdate={setPaymentMethods}
+            onMessage={showMessage}
+          />
         )}
 
         {activeTab === 'widgets' && (
