@@ -1,5 +1,4 @@
 import { useRouter } from 'next/router'
-
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { 
@@ -22,6 +21,26 @@ import { getProducts, getStoreConfig, getDemoBanners, getHomeSections, getStoreB
 import type { Theme, ThemeWidget, ThemeBanner, ColorConfig, PageType } from '@/lib/types'
 import type { DemoProduct, StoreConfig, DemoBanner, HomeSection, StoreButton } from '@/lib/supabase/store'
 import { ProductsTab, BannersTab, ButtonsTab, SectionsTab, DeliveryTab, PaymentsTab } from '@/components/admin'
+import AdminLayout, { Card, TabsContainer } from '@/components/admin/AdminLayout'
+import { 
+  FileText, 
+  Palette, 
+  Package, 
+  Image, 
+  LayoutGrid, 
+  MousePointer, 
+  Truck, 
+  CreditCard, 
+  Puzzle, 
+  Code,
+  Save,
+  Eye,
+  ArrowLeft,
+  Check,
+  AlertCircle,
+  Upload,
+  X
+} from 'lucide-react'
 
 type TabType = 'info' | 'cores' | 'produtos' | 'banners' | 'secoes' | 'botoes' | 'entrega' | 'pagamentos' | 'widgets' | 'css'
 
@@ -381,108 +400,136 @@ export default function EditThemePage() {
     }
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-600">Carregando...</div></div>
-  if (!theme) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="text-gray-600">Tema não encontrado</div></div>
+  if (loading) return (
+    <AdminLayout title="Carregando...">
+      <div className="flex items-center justify-center h-96">
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    </AdminLayout>
+  )
 
-  const tabs: { id: TabType; label: string }[] = [
-    { id: 'info', label: '📋 Info' },
-    { id: 'cores', label: '🎨 Cores' },
-    { id: 'produtos', label: '📦 Produtos' },
-    { id: 'banners', label: '🖼️ Banners' },
-    { id: 'secoes', label: '📐 Seções' },
-    { id: 'botoes', label: '🎛️ Botões' },
-    { id: 'entrega', label: '🚚 Entrega' },
-    { id: 'pagamentos', label: '💳 Pagamentos' },
-    { id: 'widgets', label: '🧩 Widgets' },
-    { id: 'css', label: '💻 CSS' }
+  if (!theme) return (
+    <AdminLayout title="Erro">
+      <Card className="text-center py-16">
+        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-white mb-2">Tema não encontrado</h2>
+        <p className="text-slate-400 mb-6">O tema que você está procurando não existe ou foi removido.</p>
+        <button onClick={() => router.push('/admin/themes')} className="btn-primary">
+          Voltar para Temas
+        </button>
+      </Card>
+    </AdminLayout>
+  )
+
+  const tabsConfig = [
+    { id: 'info', label: 'Informações', icon: <FileText className="w-4 h-4" /> },
+    { id: 'cores', label: 'Cores', icon: <Palette className="w-4 h-4" /> },
+    { id: 'produtos', label: 'Produtos', icon: <Package className="w-4 h-4" /> },
+    { id: 'banners', label: 'Banners', icon: <Image className="w-4 h-4" /> },
+    { id: 'secoes', label: 'Seções', icon: <LayoutGrid className="w-4 h-4" /> },
+    { id: 'botoes', label: 'Botões', icon: <MousePointer className="w-4 h-4" /> },
+    { id: 'entrega', label: 'Entrega', icon: <Truck className="w-4 h-4" /> },
+    { id: 'pagamentos', label: 'Pagamentos', icon: <CreditCard className="w-4 h-4" /> },
+    { id: 'widgets', label: 'Widgets', icon: <Puzzle className="w-4 h-4" /> },
+    { id: 'css', label: 'CSS', icon: <Code className="w-4 h-4" /> }
   ]
 
+  const tabs: { id: TabType; label: string }[] = tabsConfig.map(t => ({ id: t.id as TabType, label: t.label }))
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
-            <button onClick={() => router.push('/admin/themes')} className="text-gray-500 hover:text-gray-800 flex items-center gap-1">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              Voltar
-            </button>
-            <h1 className="text-xl font-bold text-gray-800">Editando: {theme.name}</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => router.push(`/admin/themes/${theme.id}/products`)}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition flex items-center gap-2"
-            >
-              📦 Produtos Demo
-            </button>
-            <a href={`/preview/${theme.slug}`} target="_blank" className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg font-medium transition">
-              Ver Preview
-            </a>
+    <AdminLayout title={`Editando: ${theme.name}`}>
+      {/* Header com ações */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => router.push('/admin/themes')} 
+            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-white">{theme.name}</h1>
+            <p className="text-sm text-slate-400">/{theme.slug}</p>
           </div>
         </div>
-      </header>
+        <div className="flex items-center gap-3">
+          <a 
+            href={`/preview/${theme.slug}`} 
+            target="_blank" 
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 transition"
+          >
+            <Eye className="w-4 h-4" />
+            Preview
+          </a>
+        </div>
+      </div>
 
+      {/* Mensagem de feedback */}
       {message && (
-        <div className="max-w-7xl mx-auto px-6 mt-4">
-          <div className={`p-4 rounded-lg ${message.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'}`}>
-            {message.text}
-          </div>
+        <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-fadeIn ${
+          message.type === 'success' 
+            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
+            : 'bg-red-500/10 border border-red-500/20 text-red-400'
+        }`}>
+          {message.type === 'success' ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+          {message.text}
         </div>
       )}
 
-      <div className="bg-white border-b border-gray-200">
-        <nav className="flex gap-1 px-6 max-w-7xl mx-auto">
-          {tabs.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-3 font-medium transition-colors ${activeTab === tab.id ? 'text-pink-600 border-b-2 border-pink-500' : 'text-gray-500 hover:text-gray-800'}`}>
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+      {/* Tabs */}
+      <TabsContainer
+        tabs={tabsConfig}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as TabType)}
+      />
 
-      <div className="max-w-7xl mx-auto p-6">
+      {/* Content */}
+      <div className="space-y-6">
         {activeTab === 'info' && (
-          <div className="max-w-2xl bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-5">
-            <h2 className="text-lg font-semibold text-gray-800 pb-2 border-b">Informações do Tema</h2>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Tema</label>
-              <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Slug (URL)</label>
-              <input type="text" value={slug} onChange={e => setSlug(e.target.value)} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-              <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+          <Card>
+            <h2 className="text-lg font-semibold text-white mb-6 pb-4 border-b border-white/10">Informações do Tema</h2>
+            <div className="space-y-5 max-w-2xl">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Preço (R$)</label>
-                <input type="number" value={price} onChange={e => setPrice(e.target.value)} step="0.01" min="0" className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none" />
+                <label className="block text-sm font-medium text-slate-300 mb-2">Nome do Tema</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} className="input-modern w-full" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select value={status} onChange={e => setStatus(e.target.value as any)} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none">
-                  <option value="draft">Rascunho</option>
-                  <option value="published">Publicado</option>
-                  <option value="archived">Arquivado</option>
-                </select>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Slug (URL)</label>
+                <input type="text" value={slug} onChange={e => setSlug(e.target.value)} className="input-modern w-full" />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Descrição</label>
+                <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="input-modern w-full" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Preço (R$)</label>
+                  <input type="number" value={price} onChange={e => setPrice(e.target.value)} step="0.01" min="0" className="input-modern w-full" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Status</label>
+                  <select value={status} onChange={e => setStatus(e.target.value as any)} className="input-modern w-full">
+                    <option value="draft">Rascunho</option>
+                    <option value="published">Publicado</option>
+                    <option value="archived">Arquivado</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">URL da Thumbnail</label>
+                <input type="url" value={thumbnail} onChange={e => setThumbnail(e.target.value)} placeholder="https://..." className="input-modern w-full" />
+                {thumbnail && <img src={thumbnail} alt="Preview" className="mt-2 h-24 rounded-lg object-cover border border-white/10" />}
+              </div>
+              <button onClick={handleSaveInfo} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all disabled:opacity-50">
+                <Save className="w-4 h-4" />
+                {saving ? 'Salvando...' : 'Salvar Informações'}
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">URL da Thumbnail</label>
-              <input type="url" value={thumbnail} onChange={e => setThumbnail(e.target.value)} placeholder="https://..." className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none" />
-              {thumbnail && <img src={thumbnail} alt="Preview" className="mt-2 h-24 rounded-lg object-cover border" />}
-            </div>
-            <button onClick={handleSaveInfo} disabled={saving} className="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white rounded-lg font-medium transition">
-              {saving ? 'Salvando...' : 'Salvar Informações'}
-            </button>
-          </div>
+          </Card>
         )}
 
         {activeTab === 'cores' && (
-          <div className="space-y-6">
+          <Card>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold text-gray-800">Paleta de Cores</h2>
@@ -568,11 +615,11 @@ export default function EditThemePage() {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         )}
 
         {activeTab === 'banners' && (
-          <div className="space-y-6">
+          <Card>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">Adicionar Banner</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -652,10 +699,10 @@ export default function EditThemePage() {
                     </div>
                   </div>
                 ))}
-                {banners.length === 0 && <div className="text-center text-gray-500 py-8">Nenhum banner cadastrado</div>}
+                {banners.length === 0 && <div className="text-center text-slate-400 py-8">Nenhum banner cadastrado</div>}
               </div>
             </div>
-          </div>
+          </Card>
         )}
 
         {/* Novas Abas */}
@@ -856,16 +903,16 @@ export default function EditThemePage() {
               <input type="url" value={editingBanner.link_url || ''} onChange={e => setEditingBanner({ ...editingBanner, link_url: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg" placeholder="Link" />
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={editingBanner.is_active} onChange={e => setEditingBanner({ ...editingBanner, is_active: e.target.checked })} className="w-4 h-4" />
-                <span className="text-gray-700">Ativo</span>
+                <span className="text-slate-300">Ativo</span>
               </label>
               <div className="flex gap-3 pt-2">
-                <button onClick={handleUpdateBanner} disabled={saving} className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg">Salvar</button>
-                <button onClick={() => setEditingBanner(null)} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg">Cancelar</button>
+                <button onClick={handleUpdateBanner} disabled={saving} className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg">Salvar</button>
+                <button onClick={() => setEditingBanner(null)} className="px-4 py-2 bg-white/5 border border-white/10 text-white rounded-lg hover:bg-white/10">Cancelar</button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   )
 }
