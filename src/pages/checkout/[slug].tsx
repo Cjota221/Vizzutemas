@@ -35,6 +35,12 @@ export default function CheckoutPage({ theme }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    
+    if (!theme) {
+      setError('Tema não encontrado')
+      return
+    }
+    
     setLoading(true)
     setError('')
 
