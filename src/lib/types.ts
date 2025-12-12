@@ -19,8 +19,8 @@ export type ColorConfig = {
   cor_fundo_rodape: string              // Cor do fundo do rodapé
 }
 
-// Tipo de página para CSS específico
-export type PageType = 'home' | 'produto' | 'carrinho' | 'checkout'
+// Tipo de página para CSS específico (alinhado com o banco de dados)
+export type PageType = 'home' | 'product' | 'cart'
 
 // Tema - representa um tema disponível na plataforma
 export type Theme = {

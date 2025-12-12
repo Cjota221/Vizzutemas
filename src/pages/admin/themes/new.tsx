@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { createTheme, upsertCss } from '@/lib/supabase/themes'
+import { createTheme, upsertCssByPage } from '@/lib/supabase/themes'
 
 /**
  * Admin - Criar novo tema
@@ -50,9 +50,9 @@ export default function NewTheme() {
       }
 
       // Salvar CSS
-      if (cssHome) await upsertCss(theme.id, 'home', cssHome)
-      if (cssProduct) await upsertCss(theme.id, 'product', cssProduct)
-      if (cssCart) await upsertCss(theme.id, 'cart', cssCart)
+      if (cssHome) await upsertCssByPage(theme.id, 'home', cssHome)
+      if (cssProduct) await upsertCssByPage(theme.id, 'product', cssProduct)
+      if (cssCart) await upsertCssByPage(theme.id, 'cart', cssCart)
 
       // Redirecionar
       if (preview) {
