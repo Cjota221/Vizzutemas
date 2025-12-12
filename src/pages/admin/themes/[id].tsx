@@ -66,12 +66,11 @@ const colorLabels: Record<string, string> = {
   cor_fundo_rodape: 'Cor do fundo do rodapé'
 }
 
-// Páginas disponíveis para CSS
+// Páginas disponíveis para CSS (alinhado com PageType: 'home' | 'product' | 'cart')
 const pageTypes: { id: PageType; label: string }[] = [
   { id: 'home', label: 'Home' },
-  { id: 'produto', label: 'Produto' },
-  { id: 'carrinho', label: 'Carrinho' },
-  { id: 'checkout', label: 'Checkout' }
+  { id: 'product', label: 'Produto' },
+  { id: 'cart', label: 'Carrinho' }
 ]
 
 export default function EditThemePage() {
