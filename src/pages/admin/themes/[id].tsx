@@ -95,12 +95,11 @@ export default function EditThemePage() {
   const [thumbnail, setThumbnail] = useState('')
   const [colors, setColors] = useState<ColorConfig>(defaultColors)
   
-  // CSS por página
+  // CSS por página (alinhado com PageType: 'home' | 'product' | 'cart')
   const [cssByPage, setCssByPage] = useState<Record<PageType, string>>({
     home: '',
-    produto: '',
-    carrinho: '',
-    checkout: ''
+    product: '',
+    cart: ''
   })
   
   const [widgets, setWidgets] = useState<ThemeWidget[]>([])
