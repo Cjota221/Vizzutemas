@@ -135,7 +135,7 @@ export default function EditThemePage() {
           return { page: page.id, css: cssData?.css_code || '' }
         })
         const cssResults = await Promise.all(cssPromises)
-        const cssMap: Record<PageType, string> = { home: '', produto: '', carrinho: '', checkout: '' }
+        const cssMap: Record<PageType, string> = { home: '', product: '', cart: '' }
         cssResults.forEach(result => {
           cssMap[result.page] = result.css
         })
