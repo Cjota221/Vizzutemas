@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState, useRef } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
 import { 
   getThemeById, 
@@ -21,26 +22,7 @@ import { getProducts, getStoreConfig, getDemoBanners, getHomeSections, getStoreB
 import type { Theme, ThemeWidget, ThemeBanner, ColorConfig, PageType } from '@/lib/types'
 import type { DemoProduct, StoreConfig, DemoBanner, HomeSection, StoreButton } from '@/lib/supabase/store'
 import { ProductsTab, BannersTab, ButtonsTab, SectionsTab, DeliveryTab, PaymentsTab } from '@/components/admin'
-import AdminLayout, { Card, TabsContainer } from '@/components/admin/AdminLayout'
-import { 
-  FileText, 
-  Palette, 
-  Package, 
-  Image, 
-  LayoutGrid, 
-  MousePointer, 
-  Truck, 
-  CreditCard, 
-  Puzzle, 
-  Code,
-  Save,
-  Eye,
-  ArrowLeft,
-  Check,
-  AlertCircle,
-  Upload,
-  X
-} from 'lucide-react'
+import AdminLayout, { Card } from '@/components/admin/AdminLayout'
 
 type TabType = 'info' | 'cores' | 'produtos' | 'banners' | 'secoes' | 'botoes' | 'entrega' | 'pagamentos' | 'widgets' | 'css'
 
@@ -403,85 +385,92 @@ export default function EditThemePage() {
   if (loading) return (
     <AdminLayout title="Carregando...">
       <div className="flex items-center justify-center h-96">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     </AdminLayout>
   )
 
   if (!theme) return (
     <AdminLayout title="Erro">
-      <Card className="text-center py-16">
-        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-white mb-2">Tema não encontrado</h2>
-        <p className="text-slate-400 mb-6">O tema que você está procurando não existe ou foi removido.</p>
-        <button onClick={() => router.push('/admin/themes')} className="btn-primary">
+      <Card className="text-center py-12">
+        <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-red-100 flex items-center justify-center">
+          <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Tema não encontrado</h2>
+        <p className="text-gray-500 mb-4">O tema que você está procurando não existe.</p>
+        <button onClick={() => router.push('/admin/themes')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
           Voltar para Temas
         </button>
       </Card>
     </AdminLayout>
   )
 
-  const tabsConfig = [
-    { id: 'info', label: 'Informações', icon: <FileText className="w-4 h-4" /> },
-    { id: 'cores', label: 'Cores', icon: <Palette className="w-4 h-4" /> },
-    { id: 'produtos', label: 'Produtos', icon: <Package className="w-4 h-4" /> },
-    { id: 'banners', label: 'Banners', icon: <Image className="w-4 h-4" /> },
-    { id: 'secoes', label: 'Seções', icon: <LayoutGrid className="w-4 h-4" /> },
-    { id: 'botoes', label: 'Botões', icon: <MousePointer className="w-4 h-4" /> },
-    { id: 'entrega', label: 'Entrega', icon: <Truck className="w-4 h-4" /> },
-    { id: 'pagamentos', label: 'Pagamentos', icon: <CreditCard className="w-4 h-4" /> },
-    { id: 'widgets', label: 'Widgets', icon: <Puzzle className="w-4 h-4" /> },
-    { id: 'css', label: 'CSS', icon: <Code className="w-4 h-4" /> }
+  const tabs: { id: TabType; label: string }[] = [
+    { id: 'info', label: 'Informações' },
+    { id: 'cores', label: 'Cores' },
+    { id: 'produtos', label: 'Produtos' },
+    { id: 'banners', label: 'Banners' },
+    { id: 'secoes', label: 'Seções' },
+    { id: 'botoes', label: 'Botões' },
+    { id: 'entrega', label: 'Entrega' },
+    { id: 'pagamentos', label: 'Pagamentos' },
+    { id: 'widgets', label: 'Widgets' },
+    { id: 'css', label: 'CSS' }
   ]
-
-  const tabs: { id: TabType; label: string }[] = tabsConfig.map(t => ({ id: t.id as TabType, label: t.label }))
 
   return (
     <AdminLayout title={`Editando: ${theme.name}`}>
-      {/* Header com ações */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => router.push('/admin/themes')} 
-            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+          <Link href="/admin/themes" className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
           <div>
-            <h1 className="text-xl font-bold text-white">{theme.name}</h1>
-            <p className="text-sm text-slate-400">/{theme.slug}</p>
+            <h1 className="text-xl font-semibold text-gray-900">{theme.name}</h1>
+            <p className="text-sm text-gray-500">/{theme.slug}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <a 
-            href={`/preview/${theme.slug}`} 
-            target="_blank" 
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 transition"
-          >
-            <Eye className="w-4 h-4" />
-            Preview
-          </a>
-        </div>
+        <a 
+          href={`/preview/${theme.slug}`} 
+          target="_blank" 
+          className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+        >
+          Ver Preview
+        </a>
       </div>
 
       {/* Mensagem de feedback */}
       {message && (
-        <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 animate-fadeIn ${
+        <div className={`mb-6 px-4 py-3 rounded-lg text-sm ${
           message.type === 'success' 
-            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' 
-            : 'bg-red-500/10 border border-red-500/20 text-red-400'
+            ? 'bg-green-50 text-green-700 border border-green-200' 
+            : 'bg-red-50 text-red-700 border border-red-200'
         }`}>
-          {message.type === 'success' ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
           {message.text}
         </div>
       )}
 
       {/* Tabs */}
-      <TabsContainer
-        tabs={tabsConfig}
-        activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as TabType)}
-      />
+      <div className="flex gap-1 mb-6 overflow-x-auto pb-2 border-b border-gray-200">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
+              activeTab === tab.id 
+                ? 'bg-blue-600 text-white' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {/* Content */}
       <div className="space-y-6">
@@ -520,8 +509,7 @@ export default function EditThemePage() {
                 <input type="url" value={thumbnail} onChange={e => setThumbnail(e.target.value)} placeholder="https://..." className="input-modern w-full" />
                 {thumbnail && <img src={thumbnail} alt="Preview" className="mt-2 h-24 rounded-lg object-cover border border-white/10" />}
               </div>
-              <button onClick={handleSaveInfo} disabled={saving} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 transition-all disabled:opacity-50">
-                <Save className="w-4 h-4" />
+              <button onClick={handleSaveInfo} disabled={saving} className="px-5 py-2.5 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition disabled:opacity-50">
                 {saving ? 'Salvando...' : 'Salvar Informações'}
               </button>
             </div>

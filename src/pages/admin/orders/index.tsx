@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { listOrders, updateOrderStatus } from '@/lib/supabase/orders'
 import { Order } from '@/lib/types'
 import AdminLayout, { PageHeader, Card } from '@/components/admin/AdminLayout'
-import { ShoppingBag, User, Mail, Calendar, Clock, CheckCircle, XCircle, Truck, AlertCircle } from 'lucide-react'
 
 type Props = {
   orders: Order[]
@@ -25,8 +24,7 @@ export default function AdminOrders({ orders: initialOrders }: Props) {
   }
 
   function formatDate(dateStr: string) {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('pt-BR', {
+    return new Date(dateStr).toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -35,124 +33,106 @@ export default function AdminOrders({ orders: initialOrders }: Props) {
     })
   }
 
-  function getStatusConfig(status: Order['status']) {
-    switch (status) {
-      case 'pending':
-        return { class: 'bg-amber-500/20 text-amber-400 border-amber-500/30', label: 'Pendente', icon: Clock }
-      case 'paid':
-        return { class: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', label: 'Pago', icon: CheckCircle }
-      case 'cancelled':
-        return { class: 'bg-red-500/20 text-red-400 border-red-500/30', label: 'Cancelado', icon: XCircle }
-      case 'delivered':
-        return { class: 'bg-blue-500/20 text-blue-400 border-blue-500/30', label: 'Entregue', icon: Truck }
-      default:
-        return { class: 'bg-slate-500/20 text-slate-400 border-slate-500/30', label: status, icon: AlertCircle }
+  const getStatusStyle = (status: string) => {
+    const styles: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-700',
+      paid: 'bg-green-100 text-green-700',
+      cancelled: 'bg-red-100 text-red-700',
+      delivered: 'bg-blue-100 text-blue-700',
     }
+    return styles[status] || 'bg-gray-100 text-gray-600'
   }
 
-  const stats = {
-    total: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
-    paid: orders.filter(o => o.status === 'paid').length,
-    delivered: orders.filter(o => o.status === 'delivered').length,
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: 'Pendente',
+      paid: 'Pago',
+      cancelled: 'Cancelado',
+      delivered: 'Entregue',
+    }
+    return labels[status] || status
   }
 
   return (
     <AdminLayout title="Pedidos">
       <PageHeader
-        title="Gerenciar Pedidos"
-        description="Acompanhe e gerencie os pedidos dos seus clientes"
+        title="Pedidos"
+        description="Acompanhe os pedidos dos clientes"
       />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-white mb-1">{stats.total}</div>
-          <div className="text-slate-400 text-sm">Total</div>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <p className="text-sm text-gray-500">Total</p>
+          <p className="text-2xl font-semibold text-gray-900">{orders.length}</p>
         </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-amber-400 mb-1">{stats.pending}</div>
-          <div className="text-slate-400 text-sm">Pendentes</div>
+        <Card>
+          <p className="text-sm text-gray-500">Pendentes</p>
+          <p className="text-2xl font-semibold text-yellow-600">{orders.filter(o => o.status === 'pending').length}</p>
         </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-emerald-400 mb-1">{stats.paid}</div>
-          <div className="text-slate-400 text-sm">Pagos</div>
+        <Card>
+          <p className="text-sm text-gray-500">Pagos</p>
+          <p className="text-2xl font-semibold text-green-600">{orders.filter(o => o.status === 'paid').length}</p>
         </Card>
-        <Card className="text-center">
-          <div className="text-3xl font-bold text-blue-400 mb-1">{stats.delivered}</div>
-          <div className="text-slate-400 text-sm">Entregues</div>
+        <Card>
+          <p className="text-sm text-gray-500">Entregues</p>
+          <p className="text-2xl font-semibold text-blue-600">{orders.filter(o => o.status === 'delivered').length}</p>
         </Card>
       </div>
 
       {orders.length === 0 ? (
-        <Card className="text-center py-16">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-            <ShoppingBag className="w-8 h-8 text-indigo-400" />
+        <Card className="text-center py-12">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-gray-100 flex items-center justify-center">
+            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">Nenhum pedido ainda</h3>
-          <p className="text-slate-400 max-w-md mx-auto">
-            Os pedidos aparecerão aqui quando seus clientes comprarem temas.
-          </p>
+          <h3 className="text-base font-medium text-gray-900 mb-1">Nenhum pedido</h3>
+          <p className="text-sm text-gray-500">Os pedidos aparecerão aqui.</p>
         </Card>
       ) : (
         <Card padding={false}>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-800/50 border-b border-slate-700/50">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">Tema</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">Cliente</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300 hidden md:table-cell">E-mail</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">Status</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300 hidden lg:table-cell">Data</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-slate-300">Ações</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Cliente</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 hidden md:table-cell">E-mail</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 hidden lg:table-cell">Data</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Ação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/30">
-                {orders.map((order) => {
-                  const statusConfig = getStatusConfig(order.status)
-                  const StatusIcon = statusConfig.icon
-                  return (
-                    <tr key={order.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="px-6 py-4">
-                        <span className="font-mono text-sm text-indigo-400 bg-indigo-500/10 px-2 py-1 rounded">
-                          {order.theme_id.slice(0, 8)}...
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm font-medium">
-                            {order.customer_name.charAt(0).toUpperCase()}
-                          </div>
-                          <span className="text-white font-medium">{order.customer_name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-400 hidden md:table-cell">{order.customer_email}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${statusConfig.class}`}>
-                          <StatusIcon className="w-3.5 h-3.5" />
-                          {statusConfig.label}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-slate-500 text-sm hidden lg:table-cell">
-                        {order.created_at ? formatDate(order.created_at) : '—'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <select
-                          value={order.status}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
-                          disabled={updating === order.id}
-                          className="bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 transition"
-                        >
-                          <option value="pending">Pendente</option>
-                          <option value="paid">Pago</option>
-                          <option value="delivered">Entregue</option>
-                          <option value="cancelled">Cancelado</option>
-                        </select>
-                      </td>
-                    </tr>
-                  )
-                })}
+              <tbody className="divide-y divide-gray-100">
+                {orders.map((order) => (
+                  <tr key={order.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <span className="font-medium text-gray-900">{order.customer_name}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{order.customer_email}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${getStatusStyle(order.status || 'pending')}`}>
+                        {getStatusLabel(order.status || 'pending')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 hidden lg:table-cell">
+                      {order.created_at ? formatDate(order.created_at) : '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={order.status}
+                        onChange={(e) => handleStatusChange(order.id, e.target.value as Order['status'])}
+                        disabled={updating === order.id}
+                        className="text-sm border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                      >
+                        <option value="pending">Pendente</option>
+                        <option value="paid">Pago</option>
+                        <option value="delivered">Entregue</option>
+                        <option value="cancelled">Cancelado</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

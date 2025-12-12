@@ -1,27 +1,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import {
-  LayoutDashboard,
-  Palette,
-  ShoppingBag,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  Bell,
-  Search,
-  Menu,
-  X,
-  Layers,
-  Package,
-  Image,
-  CreditCard,
-  Truck,
-  MousePointer,
-  Code,
-  FileText
-} from 'lucide-react'
+import Head from 'next/head'
 
 type Props = {
   children: React.ReactNode
@@ -29,195 +9,126 @@ type Props = {
 }
 
 const menuItems = [
-  { 
-    group: 'Principal',
-    items: [
-      { href: '/admin/themes', icon: Palette, label: 'Temas' },
-      { href: '/admin/orders', icon: ShoppingBag, label: 'Pedidos' },
-    ]
-  },
+  { href: '/admin/themes', label: 'Temas', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
+  { href: '/admin/orders', label: 'Pedidos', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' },
 ]
 
 export default function AdminLayout({ children, title }: Props) {
   const router = useRouter()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-[#0f0f23]">
-      {/* Sidebar Desktop */}
-      <aside 
-        className={`fixed top-0 left-0 h-full bg-[#1a1a2e] border-r border-white/10 transition-all duration-300 z-40 hidden lg:block ${
-          sidebarOpen ? 'w-64' : 'w-20'
-        }`}
-      >
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
-          {sidebarOpen ? (
-            <Link href="/admin/themes" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <Layers className="w-5 h-5 text-white" />
+    <>
+      <Head>
+        <title>{title ? `${title} | Vizzutemas Admin` : 'Vizzutemas Admin'}</title>
+      </Head>
+      
+      <div className="min-h-screen bg-gray-50">
+        {/* Sidebar */}
+        <aside className="fixed inset-y-0 left-0 w-56 bg-white border-r border-gray-200 hidden lg:block">
+          {/* Logo */}
+          <div className="h-14 flex items-center px-5 border-b border-gray-100">
+            <Link href="/admin/themes" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">V</span>
               </div>
-              <span className="font-bold text-white text-lg">Vizzutemas</span>
+              <span className="font-semibold text-gray-900">Vizzutemas</span>
             </Link>
-          ) : (
-            <div className="w-full flex justify-center">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                <Layers className="w-5 h-5 text-white" />
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
 
-        {/* Menu */}
-        <nav className="p-4 space-y-6">
-          {menuItems.map((group) => (
-            <div key={group.group}>
-              {sidebarOpen && (
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3">
-                  {group.group}
-                </p>
-              )}
-              <div className="space-y-1">
-                {group.items.map((item) => {
+          {/* Navigation */}
+          <nav className="p-3 space-y-1">
+            {menuItems.map((item) => {
+              const isActive = router.pathname.startsWith(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
+                  </svg>
+                  {item.label}
+                </Link>
+              )
+            })}
+          </nav>
+        </aside>
+
+        {/* Mobile Header */}
+        <header className="lg:hidden fixed top-0 inset-x-0 h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-40">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-xs">V</span>
+            </div>
+            <span className="font-semibold text-gray-900 text-sm">Vizzutemas</span>
+          </div>
+          <button 
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="p-2 text-gray-500 hover:text-gray-700"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
+            </svg>
+          </button>
+        </header>
+
+        {/* Mobile Menu */}
+        {mobileOpen && (
+          <div className="lg:hidden fixed inset-0 z-50">
+            <div className="absolute inset-0 bg-black/20" onClick={() => setMobileOpen(false)} />
+            <div className="absolute left-0 top-0 bottom-0 w-56 bg-white shadow-xl">
+              <div className="h-14 flex items-center justify-between px-5 border-b border-gray-100">
+                <span className="font-semibold text-gray-900">Menu</span>
+                <button onClick={() => setMobileOpen(false)} className="p-1 text-gray-400 hover:text-gray-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <nav className="p-3 space-y-1">
+                {menuItems.map((item) => {
                   const isActive = router.pathname.startsWith(item.href)
-                  const Icon = item.icon
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
-                        isActive 
-                          ? 'bg-indigo-500/20 text-indigo-400' 
-                          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
-                      <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-400' : 'text-slate-500 group-hover:text-indigo-400'}`} />
-                      {sidebarOpen && <span className="font-medium">{item.label}</span>}
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
+                      </svg>
+                      {item.label}
                     </Link>
                   )
                 })}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        {/* Toggle Button */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute -right-3 top-20 w-6 h-6 bg-[#1a1a2e] border border-white/10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-colors"
-        >
-          {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-        </button>
-
-        {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/10">
-          <button className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all w-full ${!sidebarOpen && 'justify-center'}`}>
-            <Settings className="w-5 h-5" />
-            {sidebarOpen && <span className="font-medium">Configurações</span>}
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#1a1a2e] border-b border-white/10 z-50 flex items-center justify-between px-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="p-2 text-slate-400 hover:text-white"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <Layers className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-white">Vizzutemas</span>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileMenuOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-64 bg-[#1a1a2e] animate-slideIn">
-            <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
-              <span className="font-bold text-white text-lg">Menu</span>
-              <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-slate-400">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <nav className="p-4 space-y-6">
-              {menuItems.map((group) => (
-                <div key={group.group}>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 px-3">
-                    {group.group}
-                  </p>
-                  <div className="space-y-1">
-                    {group.items.map((item) => {
-                      const isActive = router.pathname.startsWith(item.href)
-                      const Icon = item.icon
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-                            isActive 
-                              ? 'bg-indigo-500/20 text-indigo-400' 
-                              : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                          }`}
-                        >
-                          <Icon className="w-5 h-5" />
-                          <span className="font-medium">{item.label}</span>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </nav>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <main className={`min-h-screen transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'} pt-16 lg:pt-0`}>
-        {/* Top Bar */}
-        <div className="hidden lg:flex h-16 items-center justify-between px-8 bg-[#0f0f23] border-b border-white/5">
-          <div className="flex items-center gap-4">
-            {title && <h1 className="text-xl font-semibold text-white">{title}</h1>}
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input 
-                type="text" 
-                placeholder="Buscar..." 
-                className="w-64 pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
-              />
-            </div>
-            <button className="p-2 text-slate-400 hover:text-white relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full"></span>
-            </button>
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm">
-              V
+              </nav>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Page Content */}
-        <div className="p-4 lg:p-8">
-          {children}
-        </div>
-      </main>
-    </div>
+        {/* Main Content */}
+        <main className="lg:pl-56 pt-14 lg:pt-0 min-h-screen">
+          <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+            {children}
+          </div>
+        </main>
+      </div>
+    </>
   )
 }
 
-// Sub-componentes para uso nas páginas
+// Simple Page Header
 export function PageHeader({ 
   title, 
   description, 
@@ -228,19 +139,20 @@ export function PageHeader({
   action?: React.ReactNode 
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">{title}</h1>
-        {description && <p className="text-slate-400 mt-1">{description}</p>}
+        <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+        {description && <p className="text-sm text-gray-500 mt-0.5">{description}</p>}
       </div>
-      {action && <div>{action}</div>}
+      {action}
     </div>
   )
 }
 
+// Simple Card
 export function Card({ 
   children, 
-  className = '',
+  className = '', 
   padding = true 
 }: { 
   children: React.ReactNode
@@ -248,37 +160,8 @@ export function Card({
   padding?: boolean
 }) {
   return (
-    <div className={`bg-[#1a1a2e] border border-white/10 rounded-2xl ${padding ? 'p-6' : ''} ${className}`}>
+    <div className={`bg-white rounded-lg border border-gray-200 ${padding ? 'p-5' : ''} ${className}`}>
       {children}
-    </div>
-  )
-}
-
-export function TabsContainer({ 
-  tabs, 
-  activeTab, 
-  onTabChange 
-}: { 
-  tabs: { id: string; label: string; icon?: React.ReactNode }[]
-  activeTab: string
-  onTabChange: (id: string) => void
-}) {
-  return (
-    <div className="flex flex-wrap gap-2 p-1 bg-white/5 rounded-xl mb-6">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          onClick={() => onTabChange(tab.id)}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
-            activeTab === tab.id
-              ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/25'
-              : 'text-slate-400 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          {tab.icon}
-          {tab.label}
-        </button>
-      ))}
     </div>
   )
 }

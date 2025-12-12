@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import type { DemoProduct } from '@/lib/supabase/store'
+import BulkProductUpload from './BulkProductUpload'
 
 type Props = {
   themeId: string
@@ -11,16 +12,17 @@ type Props = {
 
 const badges = [
   { value: '', label: 'Nenhum' },
-  { value: 'destaque', label: '⭐ Destaque' },
-  { value: 'promocao', label: '🔥 Promoção' },
-  { value: 'novo', label: '🆕 Novo' },
-  { value: 'mais_vendido', label: '🏆 Mais Vendido' },
+  { value: 'destaque', label: 'Destaque' },
+  { value: 'promocao', label: 'Promoção' },
+  { value: 'novo', label: 'Novo' },
+  { value: 'mais_vendido', label: 'Mais Vendido' },
 ]
 
 export default function ProductsTab({ themeId, products, onUpdate, onMessage }: Props) {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [showBulkUpload, setShowBulkUpload] = useState(false)
   const [editingProduct, setEditingProduct] = useState<DemoProduct | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -193,7 +195,7 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
     }
   }
 
-  const inputClass = "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+  const inputClass = "w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none"
   const labelClass = "block text-sm font-medium text-gray-700 mb-1"
 
   // Agrupar produtos por categoria
@@ -201,27 +203,50 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
 
   return (
     <div className="space-y-6">
+      {/* Bulk Upload Modal */}
+      {showBulkUpload && (
+        <BulkProductUpload
+          themeId={themeId}
+          existingProducts={products}
+          onUpdate={onUpdate}
+          onMessage={onMessage}
+          onClose={() => setShowBulkUpload(false)}
+        />
+      )}
+
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-800">
-          📦 Produtos ({products.length})
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h3 className="text-lg font-semibold text-gray-900">
+          Produtos ({products.length})
         </h3>
-        <button
-          onClick={() => setShowForm(true)}
-          className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg font-medium flex items-center gap-2"
-        >
-          ➕ Novo Produto
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowBulkUpload(true)}
+            className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors"
+          >
+            Cadastro em Massa
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-colors"
+          >
+            + Novo Produto
+          </button>
+        </div>
       </div>
 
       {/* Formulário */}
       {showForm && (
-        <div className="bg-white rounded-xl border p-6 space-y-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-5 space-y-5">
           <div className="flex justify-between items-center">
-            <h4 className="font-medium text-gray-800">
-              {editingProduct ? '✏️ Editar Produto' : '➕ Novo Produto'}
+            <h4 className="font-medium text-gray-900">
+              {editingProduct ? 'Editar Produto' : 'Novo Produto'}
             </h4>
-            <button onClick={resetForm} className="text-gray-500 hover:text-gray-700">✕</button>
+            <button onClick={resetForm} className="p-1 text-gray-400 hover:text-gray-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -311,9 +336,9 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
                 id="is_featured"
                 checked={form.is_featured}
                 onChange={e => setForm({ ...form, is_featured: e.target.checked })}
-                className="w-4 h-4 text-pink-500 rounded"
+                className="w-4 h-4 text-blue-600 rounded"
               />
-              <label htmlFor="is_featured" className="text-sm text-gray-700">⭐ Produto em destaque</label>
+              <label htmlFor="is_featured" className="text-sm text-gray-700">Produto em destaque</label>
             </div>
           </div>
 
@@ -341,7 +366,7 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
                   disabled={uploading}
                   className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm disabled:opacity-50"
                 >
-                  {uploading ? '⏳ Enviando...' : '📷 Enviar Imagem'}
+                  {uploading ? 'Enviando...' : 'Enviar Imagem'}
                 </button>
                 <p className="text-xs text-gray-500 mt-1">ou cole a URL abaixo</p>
               </div>
@@ -355,19 +380,19 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
             />
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-3 border-t border-gray-100">
             <button
               onClick={resetForm}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
             >
               Cancelar
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className="px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg font-medium disabled:opacity-50"
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm disabled:opacity-50"
             >
-              {saving ? '⏳ Salvando...' : '💾 Salvar'}
+              {saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
         </div>
@@ -375,15 +400,19 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
 
       {/* Lista de Produtos */}
       {products.length === 0 ? (
-        <div className="bg-white rounded-xl border p-8 text-center text-gray-500">
-          <p className="text-4xl mb-2">📦</p>
-          <p>Nenhum produto cadastrado</p>
-          <p className="text-sm">Clique em "Novo Produto" para começar</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-gray-100 flex items-center justify-center">
+            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <p className="text-gray-600 mb-1">Nenhum produto cadastrado</p>
+          <p className="text-sm text-gray-400">Clique em "Novo Produto" ou "Cadastro em Massa"</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {products.map(product => (
-            <div key={product.id} className="bg-white rounded-xl border overflow-hidden hover:shadow-md transition-shadow">
+            <div key={product.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
               <div className="relative">
                 <img
                   src={product.image_url}
@@ -391,23 +420,23 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
                   className="w-full h-40 object-cover"
                 />
                 {product.badge && (
-                  <span className="absolute top-2 left-2 px-2 py-1 bg-pink-500 text-white text-xs rounded-full">
-                    {product.badge === 'destaque' && '⭐ Destaque'}
-                    {product.badge === 'promocao' && '🔥 Promoção'}
-                    {product.badge === 'novo' && '🆕 Novo'}
-                    {product.badge === 'mais_vendido' && '🏆 Top'}
+                  <span className="absolute top-2 left-2 px-2 py-0.5 bg-blue-600 text-white text-xs rounded">
+                    {product.badge === 'destaque' && 'Destaque'}
+                    {product.badge === 'promocao' && 'Promoção'}
+                    {product.badge === 'novo' && 'Novo'}
+                    {product.badge === 'mais_vendido' && 'Top'}
                   </span>
                 )}
-                <button
-                  onClick={() => toggleFeatured(product)}
-                  className={`absolute top-2 right-2 p-1.5 rounded-full ${product.is_featured ? 'bg-yellow-400' : 'bg-gray-200'}`}
-                  title={product.is_featured ? 'Remover destaque' : 'Destacar'}
-                >
-                  ⭐
-                </button>
+                {product.is_featured && (
+                  <span className="absolute top-2 right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </span>
+                )}
               </div>
               <div className="p-4">
-                <h4 className="font-medium text-gray-800 truncate">{product.name}</h4>
+                <h4 className="font-medium text-gray-900 truncate">{product.name}</h4>
                 <p className="text-sm text-gray-500">{product.category || 'Sem categoria'}</p>
                 <div className="flex items-center gap-2 mt-2">
                   {product.original_price && (
@@ -415,22 +444,22 @@ export default function ProductsTab({ themeId, products, onUpdate, onMessage }: 
                       R$ {product.original_price.toFixed(2)}
                     </span>
                   )}
-                  <span className="font-bold text-pink-500">
+                  <span className="font-semibold text-blue-600">
                     R$ {product.price.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={() => editProduct(product)}
-                    className="flex-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-sm"
+                    className="flex-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-sm transition-colors"
                   >
-                    ✏️ Editar
+                    Editar
                   </button>
                   <button
                     onClick={() => handleDelete(product.id)}
-                    className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm"
+                    className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded text-sm transition-colors"
                   >
-                    🗑️
+                    Excluir
                   </button>
                 </div>
               </div>
