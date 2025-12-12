@@ -18,13 +18,13 @@ import {
   getCssByPage,
   upsertCssByPage
 } from '@/lib/supabase/themes'
-import { getProducts, getStoreConfig, getDemoBanners, getHomeSections, getStoreButtons } from '@/lib/supabase/store'
+import { getProducts, getDemoBanners } from '@/lib/supabase/store'
 import type { Theme, ThemeWidget, ThemeBanner, ColorConfig, PageType } from '@/lib/types'
-import type { DemoProduct, StoreConfig, DemoBanner, HomeSection, StoreButton } from '@/lib/supabase/store'
-import { ProductsTab, BannersTab, ButtonsTab, SectionsTab, DeliveryTab, PaymentsTab } from '@/components/admin'
+import type { DemoProduct, DemoBanner } from '@/lib/supabase/store'
+import { ProductsTab, BannersTab } from '@/components/admin'
 import AdminLayout, { Card } from '@/components/admin/AdminLayout'
 
-type TabType = 'info' | 'cores' | 'produtos' | 'banners' | 'secoes' | 'botoes' | 'entrega' | 'pagamentos' | 'widgets' | 'css'
+type TabType = 'info' | 'cores' | 'produtos' | 'banners' | 'css'
 
 // Cores padrão - exatamente como na plataforma
 const defaultColors: ColorConfig = {
@@ -116,10 +116,6 @@ export default function EditThemePage() {
   // Estados para as novas abas
   const [products, setProducts] = useState<DemoProduct[]>([])
   const [demoBanners, setDemoBanners] = useState<DemoBanner[]>([])
-  const [homeSections, setHomeSections] = useState<HomeSection[]>([])
-  const [storeButtons, setStoreButtons] = useState<StoreButton[]>([])
-  const [deliveryOptions, setDeliveryOptions] = useState<any[]>([])
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
 
   useEffect(() => {
     if (id && typeof id === 'string') loadData(id)
@@ -128,24 +124,16 @@ export default function EditThemePage() {
   async function loadData(themeId: string) {
     try {
       setLoading(true)
-      const [themeData, widgetsData, bannersData, productsData, demoBannersData, sectionsData, buttonsData, deliveryData, paymentsData] = await Promise.all([
+      const [themeData, widgetsData, bannersData, productsData, demoBannersData] = await Promise.all([
         getThemeById(themeId), 
         getWidgetsByTheme(themeId), 
         getBannersByTheme(themeId),
         getProducts(themeId),
-        getDemoBanners(themeId),
-        getHomeSections(themeId),
-        getStoreButtons(themeId),
-        supabase.from('delivery_options').select('*').eq('theme_id', themeId).then(r => r.data || []),
-        supabase.from('payment_methods').select('*').eq('theme_id', themeId).then(r => r.data || [])
+        getDemoBanners(themeId)
       ])
       
       setProducts(productsData || [])
       setDemoBanners(demoBannersData || [])
-      setHomeSections(sectionsData || [])
-      setStoreButtons(buttonsData || [])
-      setDeliveryOptions(deliveryData || [])
-      setPaymentMethods(paymentsData || [])
       
       if (themeData) {
         setTheme(themeData)
@@ -412,12 +400,7 @@ export default function EditThemePage() {
     { id: 'cores', label: 'Cores' },
     { id: 'produtos', label: 'Produtos' },
     { id: 'banners', label: 'Banners' },
-    { id: 'secoes', label: 'Seções' },
-    { id: 'botoes', label: 'Botões' },
-    { id: 'entrega', label: 'Entrega' },
-    { id: 'pagamentos', label: 'Pagamentos' },
-    { id: 'widgets', label: 'Widgets' },
-    { id: 'css', label: 'CSS' }
+    { id: 'css', label: 'CSS Avançado' }
   ]
 
   return (
@@ -701,96 +684,6 @@ export default function EditThemePage() {
             onUpdate={setProducts}
             onMessage={showMessage}
           />
-        )}
-
-        {activeTab === 'secoes' && (
-          <SectionsTab
-            themeId={theme.id}
-            sections={homeSections}
-            onUpdate={setHomeSections}
-            onMessage={showMessage}
-          />
-        )}
-
-        {activeTab === 'botoes' && (
-          <ButtonsTab
-            themeId={theme.id}
-            buttons={storeButtons}
-            onUpdate={setStoreButtons}
-            onMessage={showMessage}
-          />
-        )}
-
-        {activeTab === 'entrega' && (
-          <DeliveryTab
-            themeId={theme.id}
-            options={deliveryOptions}
-            onUpdate={setDeliveryOptions}
-            onMessage={showMessage}
-          />
-        )}
-
-        {activeTab === 'pagamentos' && (
-          <PaymentsTab
-            themeId={theme.id}
-            methods={paymentMethods}
-            onUpdate={setPaymentMethods}
-            onMessage={showMessage}
-          />
-        )}
-
-        {activeTab === 'widgets' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Adicionar Widget</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                  <select value={newWidget.widget_type} onChange={e => setNewWidget({ ...newWidget, widget_type: e.target.value as any })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg">
-                    <option value="html">HTML Personalizado</option>
-                    <option value="banner">Banner/Carrossel</option>
-                    <option value="image_slider">Slider de Imagens</option>
-                    <option value="product_carousel">Carrossel de Produtos</option>
-                    <option value="text">Texto</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                  <input type="text" value={newWidget.name} onChange={e => setNewWidget({ ...newWidget, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg" placeholder="Nome do widget" />
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo HTML</label>
-                <textarea value={newWidget.html_content} onChange={e => setNewWidget({ ...newWidget, html_content: e.target.value })} rows={5} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg font-mono text-sm" placeholder="<div>Seu HTML aqui...</div>" />
-              </div>
-              <button onClick={handleAddWidget} disabled={saving || !newWidget.name} className="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white rounded-lg font-medium transition">
-                Adicionar Widget
-              </button>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Widgets Cadastrados</h2>
-              <div className="space-y-3">
-                {widgets.map((widget, index) => (
-                  <div key={widget.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <span className="text-gray-400 font-mono text-sm">{index + 1}</span>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{widget.widget_type}</span>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{widget.name}</h4>
-                    </div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${widget.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {widget.is_active ? 'Ativo' : 'Inativo'}
-                    </span>
-                    <div className="flex gap-2">
-                      <button onClick={() => setEditingWidget(widget)} className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-sm">Editar</button>
-                      <button onClick={() => handleDeleteWidget(widget.id)} className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm">Excluir</button>
-                    </div>
-                  </div>
-                ))}
-                {widgets.length === 0 && <div className="text-center text-gray-500 py-8">Nenhum widget cadastrado</div>}
-              </div>
-            </div>
-          </div>
         )}
 
         {activeTab === 'css' && (
