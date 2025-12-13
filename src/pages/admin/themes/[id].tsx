@@ -486,7 +486,7 @@ export default function EditThemePage() {
   if (loading) return (
     <AdminLayout title="Carregando...">
       <div className="flex items-center justify-center h-96">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin"></div>
       </div>
     </AdminLayout>
   )
@@ -494,14 +494,14 @@ export default function EditThemePage() {
   if (!theme) return (
     <AdminLayout title="Erro">
       <Card className="text-center py-12">
-        <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-red-100 flex items-center justify-center">
-          <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-slate-100 flex items-center justify-center">
+          <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
           </svg>
         </div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Tema não encontrado</h2>
-        <p className="text-gray-500 mb-4">O tema que você está procurando não existe.</p>
-        <button onClick={() => router.push('/admin/themes')} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+        <h2 className="text-sm font-medium text-slate-900 mb-1">Tema não encontrado</h2>
+        <p className="text-sm text-slate-500 mb-4">O tema que você está procurando não existe.</p>
+        <button onClick={() => router.push('/admin/themes')} className="px-3.5 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-800 text-sm font-medium">
           Voltar para Temas
         </button>
       </Card>
@@ -521,48 +521,52 @@ export default function EditThemePage() {
   return (
     <AdminLayout title={`Editando: ${theme.name}`}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
         <div className="flex items-center gap-3">
-          <Link href="/admin/themes" className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <Link href="/admin/themes" className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
           </Link>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">{theme.name}</h1>
-            <p className="text-sm text-gray-500">/{theme.slug}</p>
+            <h1 className="text-lg font-semibold text-slate-900">{theme.name}</h1>
+            <p className="text-xs text-slate-400">/{theme.slug}</p>
           </div>
         </div>
         <a 
           href={`/preview/${theme.slug}`} 
           target="_blank" 
-          className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+          className="inline-flex items-center gap-2 px-3 py-1.5 border border-slate-200 text-slate-600 rounded-md hover:bg-slate-50 hover:border-slate-300 transition-colors text-sm"
         >
-          Ver Preview
+          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Preview
         </a>
       </div>
 
       {/* Mensagem de feedback */}
       {message && (
-        <div className={`mb-6 px-4 py-3 rounded-lg text-sm ${
+        <div className={`mb-4 px-3 py-2 rounded-md text-sm ${
           message.type === 'success' 
-            ? 'bg-green-50 text-green-700 border border-green-200' 
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
             : 'bg-red-50 text-red-700 border border-red-200'
         }`}>
           {message.text}
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 overflow-x-auto pb-2 border-b border-gray-200">
+      {/* Tabs - Underline style */}
+      <div className="flex gap-6 mb-6 overflow-x-auto border-b border-slate-200">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
+            className={`pb-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
               activeTab === tab.id 
-                ? 'bg-blue-600 text-white' 
-                : 'text-gray-600 hover:bg-gray-100'
+                ? 'text-slate-900 border-slate-900' 
+                : 'text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300'
             }`}
           >
             {tab.label}
@@ -574,28 +578,28 @@ export default function EditThemePage() {
       <div className="space-y-6">
         {activeTab === 'info' && (
           <Card>
-            <h2 className="text-lg font-semibold text-gray-800 mb-6 pb-4 border-b border-gray-200">Informações do Tema</h2>
-            <div className="space-y-5 max-w-2xl">
+            <h2 className="text-sm font-semibold text-slate-900 mb-4 pb-3 border-b border-slate-100 uppercase tracking-wide">Informações do Tema</h2>
+            <div className="space-y-4 max-w-xl">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Tema</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">Nome do Tema</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Slug (URL)</label>
-                <input type="text" value={slug} onChange={e => setSlug(e.target.value)} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">Slug (URL)</label>
+                <input type="text" value={slug} onChange={e => setSlug(e.target.value)} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
-                <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">Descrição</label>
+                <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Preço (R$)</label>
-                  <input type="number" value={price} onChange={e => setPrice(e.target.value)} step="0.01" min="0" className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">Preço (R$)</label>
+                  <input type="number" value={price} onChange={e => setPrice(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <select value={status} onChange={e => setStatus(e.target.value as any)} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">Status</label>
+                  <select value={status} onChange={e => setStatus(e.target.value as any)} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400">
                     <option value="draft">Rascunho</option>
                     <option value="published">Publicado</option>
                     <option value="archived">Arquivado</option>
@@ -603,11 +607,11 @@ export default function EditThemePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">URL da Thumbnail</label>
-                <input type="url" value={thumbnail} onChange={e => setThumbnail(e.target.value)} placeholder="https://..." className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                {thumbnail && <img src={thumbnail} alt="Preview" className="mt-2 h-24 rounded-lg object-cover border border-gray-200" />}
+                <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">URL da Thumbnail</label>
+                <input type="url" value={thumbnail} onChange={e => setThumbnail(e.target.value)} placeholder="https://..." className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" />
+                {thumbnail && <img src={thumbnail} alt="Preview" className="mt-2 h-20 rounded-md object-cover border border-slate-200" />}
               </div>
-              <button onClick={handleSaveInfo} disabled={saving} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50">
+              <button onClick={handleSaveInfo} disabled={saving} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-md transition disabled:opacity-50">
                 {saving ? 'Salvando...' : 'Salvar Informações'}
               </button>
             </div>
@@ -619,9 +623,9 @@ export default function EditThemePage() {
           <div className="space-y-6">
             {/* Logo da Loja */}
             <Card>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">🏪 Logomarca da Loja</h2>
-                <p className="text-sm text-gray-500 mb-4">Faça upload ou cole a URL da logo que aparecerá no cabeçalho</p>
+              <div className="p-0">
+                <h2 className="text-sm font-semibold text-slate-900 mb-1 uppercase tracking-wide">Logomarca da Loja</h2>
+                <p className="text-sm text-slate-500 mb-4">Faça upload ou cole a URL da logo que aparecerá no cabeçalho</p>
                 
                 <div className="flex items-start gap-6">
                   <div className="flex-1">
@@ -629,7 +633,7 @@ export default function EditThemePage() {
                       type="url" 
                       value={logoUrl} 
                       onChange={e => setLogoUrl(e.target.value)} 
-                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-800" 
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" 
                       placeholder="Cole a URL da logo aqui..." 
                     />
                     <div className="mt-2">
@@ -640,14 +644,14 @@ export default function EditThemePage() {
                           if (url) setLogoUrl(url)
                         }
                       }} className="hidden" />
-                      <button onClick={() => fileInputLogo.current?.click()} disabled={uploading} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
-                        {uploading ? 'Enviando...' : '📤 Fazer upload'}
+                      <button onClick={() => fileInputLogo.current?.click()} disabled={uploading} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md text-sm transition">
+                        {uploading ? 'Enviando...' : 'Fazer upload'}
                       </button>
                     </div>
                   </div>
                   {logoUrl && (
                     <div className="relative">
-                      <img src={logoUrl} alt="Logo" className="h-20 w-auto object-contain border rounded-lg p-2 bg-gray-50" />
+                      <img src={logoUrl} alt="Logo" className="h-20 w-auto object-contain border rounded-lg p-2 bg-slate-50" />
                       <button onClick={() => setLogoUrl('')} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600">×</button>
                     </div>
                   )}
@@ -657,13 +661,13 @@ export default function EditThemePage() {
 
             {/* Seções do Layout */}
             <Card>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-800">📐 Seções da Página</h2>
-                    <p className="text-sm text-gray-500 mt-1">Arraste para reordenar • Clique para ativar/desativar</p>
+                    <h2 className="text-lg font-semibold text-slate-800">📐 Seções da Página</h2>
+                    <p className="text-sm text-slate-500 mt-1">Arraste para reordenar • Clique para ativar/desativar</p>
                   </div>
-                  <button onClick={handleSaveLayout} disabled={saving} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm transition">
+                  <button onClick={handleSaveLayout} disabled={saving} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-lg font-medium text-sm transition">
                     {saving ? 'Salvando...' : '💾 Salvar Layout'}
                   </button>
                 </div>
@@ -691,19 +695,19 @@ export default function EditThemePage() {
                       className={`flex items-center gap-4 p-4 rounded-lg border-2 transition cursor-grab active:cursor-grabbing ${
                         draggedItem === section.id ? 'opacity-50 border-blue-400 bg-blue-50' :
                         section.enabled 
-                          ? 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm' 
-                          : 'bg-gray-50 border-gray-100 opacity-60'
+                          ? 'bg-white border-slate-200 hover:border-blue-300 hover:shadow-sm' 
+                          : 'bg-slate-50 border-slate-100 opacity-60'
                       }`}
                     >
                       {/* Handle de arrastar */}
-                      <div className="text-gray-400 cursor-grab">
+                      <div className="text-slate-400 cursor-grab">
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
                         </svg>
                       </div>
                       
                       {/* Número da ordem */}
-                      <span className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 font-bold rounded-lg text-sm">
+                      <span className="w-8 h-8 flex items-center justify-center bg-blue-100 text-slate-700 font-bold rounded-lg text-sm">
                         {index + 1}
                       </span>
                       
@@ -720,14 +724,14 @@ export default function EditThemePage() {
                       
                       {/* Nome da seção */}
                       <div className="flex-1">
-                        <span className="font-medium text-gray-800">{section.label}</span>
+                        <span className="font-medium text-slate-800">{section.label}</span>
                         {section.type === 'carousel_custom' && (section as any).product_ids && (
                           <span className="text-xs text-purple-600 ml-2 px-2 py-0.5 bg-purple-50 rounded">
                             {(section as any).product_ids.length} produto(s)
                           </span>
                         )}
                         {section.type === 'carousel_custom' && (section as any).category && !(section as any).product_ids && (
-                          <span className="text-xs text-blue-600 ml-2 px-2 py-0.5 bg-blue-50 rounded">
+                          <span className="text-xs text-slate-700 ml-2 px-2 py-0.5 bg-blue-50 rounded">
                             Categoria: {(section as any).category}
                           </span>
                         )}
@@ -744,7 +748,7 @@ export default function EditThemePage() {
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
                           section.enabled 
                             ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                            : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                            : 'bg-gray-200 text-slate-500 hover:bg-gray-300'
                         }`}
                       >
                         {section.enabled ? '✓ Ativo' : 'Inativo'}
@@ -774,8 +778,8 @@ export default function EditThemePage() {
                 </div>
 
                 {/* Botão Adicionar Seção */}
-                <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-4">➕ Adicionar Nova Seção</h3>
+                <div className="border-t border-slate-200 pt-6">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-4">➕ Adicionar Nova Seção</h3>
                   
                   {!showAddCarousel && !showAddWidget ? (
                     <div className="flex flex-wrap gap-3">
@@ -799,7 +803,7 @@ export default function EditThemePage() {
                       
                       {/* Lista de widgets para seleção */}
                       <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
                           Selecione os Widgets ({selectedLayoutWidgets.length} selecionados)
                         </label>
                         
@@ -808,11 +812,11 @@ export default function EditThemePage() {
                             <p>⚠️ Nenhum widget cadastrado. Cadastre widgets primeiro na aba &quot;Widgets&quot;.</p>
                           </div>
                         ) : (
-                          <div className="max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-lg">
+                          <div className="max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-lg">
                             {widgets.map(widget => (
                               <label 
                                 key={widget.id} 
-                                className={`flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                                className={`flex items-center gap-3 p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0 ${
                                   selectedLayoutWidgets.includes(widget.id) ? 'bg-yellow-50' : ''
                                 }`}
                               >
@@ -832,14 +836,14 @@ export default function EditThemePage() {
                                   🧩
                                 </div>
                                 <div className="flex-1">
-                                  <p className="font-medium text-gray-800">{widget.name}</p>
-                                  <p className="text-sm text-gray-500">
+                                  <p className="font-medium text-slate-800">{widget.name}</p>
+                                  <p className="text-sm text-slate-500">
                                     {widget.widget_type === 'html' ? 'HTML Personalizado' : widget.widget_type}
                                     {widget.is_active ? ' • ✅ Ativo' : ' • ❌ Inativo'}
                                   </p>
                                 </div>
                                 {/* Preview do HTML (primeiros 50 chars) */}
-                                <div className="text-xs text-gray-400 max-w-[150px] truncate">
+                                <div className="text-xs text-slate-400 max-w-[150px] truncate">
                                   {widget.html_content?.substring(0, 50)}...
                                 </div>
                               </label>
@@ -900,7 +904,7 @@ export default function EditThemePage() {
                             setShowAddWidget(false)
                             setSelectedLayoutWidgets([])
                           }}
-                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm"
+                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-lg text-sm"
                         >
                           Cancelar
                         </button>
@@ -912,19 +916,19 @@ export default function EditThemePage() {
                       
                       {/* Nome do carrossel */}
                       <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Carrossel</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Carrossel</label>
                         <input 
                           type="text" 
                           value={newCarouselName}
                           onChange={e => setNewCarouselName(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-800" 
+                          className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800" 
                           placeholder="Ex: Lançamentos, Promoções, Mais Vendidos..."
                         />
                       </div>
 
                       {/* Lista de produtos para seleção */}
                       <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
                           Selecione os Produtos ({selectedCarouselProducts.length} selecionados)
                         </label>
                         
@@ -933,11 +937,11 @@ export default function EditThemePage() {
                             <p>⚠️ Nenhum produto cadastrado. Cadastre produtos primeiro na aba &quot;Produtos&quot;.</p>
                           </div>
                         ) : (
-                          <div className="max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-lg">
+                          <div className="max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-lg">
                             {products.map(product => (
                               <label 
                                 key={product.id} 
-                                className={`flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                                className={`flex items-center gap-3 p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0 ${
                                   selectedCarouselProducts.includes(product.id) ? 'bg-blue-50' : ''
                                 }`}
                               >
@@ -951,7 +955,7 @@ export default function EditThemePage() {
                                       setSelectedCarouselProducts(selectedCarouselProducts.filter(id => id !== product.id))
                                     }
                                   }}
-                                  className="w-5 h-5 text-blue-600 rounded"
+                                  className="w-5 h-5 text-slate-700 rounded"
                                 />
                                 {product.image_url && (
                                   <img 
@@ -961,8 +965,8 @@ export default function EditThemePage() {
                                   />
                                 )}
                                 <div className="flex-1">
-                                  <p className="font-medium text-gray-800">{product.name}</p>
-                                  <p className="text-sm text-gray-500">
+                                  <p className="font-medium text-slate-800">{product.name}</p>
+                                  <p className="text-sm text-slate-500">
                                     R$ {product.price?.toFixed(2)} {product.category && `• ${product.category}`}
                                   </p>
                                 </div>
@@ -1019,7 +1023,7 @@ export default function EditThemePage() {
                             }
                           }}
                           disabled={!newCarouselName || selectedCarouselProducts.length === 0}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm"
+                          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-lg text-sm"
                         >
                           Criar Carrossel ({selectedCarouselProducts.length} produtos)
                         </button>
@@ -1029,7 +1033,7 @@ export default function EditThemePage() {
                             setNewCarouselName('')
                             setSelectedCarouselProducts([])
                           }}
-                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm"
+                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-lg text-sm"
                         >
                           Cancelar
                         </button>
@@ -1042,10 +1046,10 @@ export default function EditThemePage() {
 
             {/* Grid de Produtos */}
             <Card>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">🏗️ Grid de Produtos</h3>
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-semibold text-slate-800 mb-4">🏗️ Grid de Produtos</h3>
                 <div className="flex items-center gap-4">
-                  <label className="text-sm font-medium text-gray-700">Produtos por linha (Desktop):</label>
+                  <label className="text-sm font-medium text-slate-700">Produtos por linha (Desktop):</label>
                   <div className="flex gap-2">
                     {[4, 5, 6].map(num => (
                       <button
@@ -1053,33 +1057,33 @@ export default function EditThemePage() {
                         onClick={() => setLayoutConfig({ ...layoutConfig, products_per_row: num })}
                         className={`w-12 h-12 rounded-lg font-bold text-lg transition ${
                           layoutConfig.products_per_row === num
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-slate-900 text-white shadow-md'
+                            : 'bg-slate-100 text-slate-600 hover:bg-gray-200'
                         }`}
                       >
                         {num}
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-500">colunas</span>
+                  <span className="text-sm text-slate-500">colunas</span>
                 </div>
-                <p className="text-xs text-gray-400 mt-2">No mobile serão 2 produtos por linha automaticamente</p>
+                <p className="text-xs text-slate-400 mt-2">No mobile serão 2 produtos por linha automaticamente</p>
               </div>
             </Card>
 
             {/* Preview Visual */}
             <Card>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">👁️ Preview do Layout</h3>
-                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 space-y-2 bg-gray-50">
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-semibold text-slate-800 mb-4">👁️ Preview do Layout</h3>
+                <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 space-y-2 bg-slate-50">
                   {/* Header com logo */}
-                  <div className="p-3 bg-white rounded text-center border-b-2 border-gray-200 flex items-center justify-center gap-4">
+                  <div className="p-3 bg-white rounded text-center border-b-2 border-slate-200 flex items-center justify-center gap-4">
                     {logoUrl ? (
                       <img src={logoUrl} alt="Logo" className="h-8 w-auto" />
                     ) : (
-                      <span className="text-gray-400 text-sm">[ Logo ]</span>
+                      <span className="text-slate-400 text-sm">[ Logo ]</span>
                     )}
-                    <span className="text-gray-400 text-xs">| Menu | Busca | Carrinho</span>
+                    <span className="text-slate-400 text-xs">| Menu | Busca | Carrinho</span>
                   </div>
                   
                   {/* Seções */}
@@ -1096,7 +1100,7 @@ export default function EditThemePage() {
                           section.type === 'widgets' ? 'bg-yellow-100 text-yellow-700 h-12' :
                           section.type === 'avaliacoes' ? 'bg-green-100 text-green-700 h-12' :
                           section.type === 'carousel_custom' ? 'bg-indigo-100 text-indigo-700 h-20' :
-                          'bg-gray-100 text-gray-700 h-10'
+                          'bg-slate-100 text-slate-700 h-10'
                         } flex items-center justify-center`}
                       >
                         {section.label}
@@ -1118,11 +1122,11 @@ export default function EditThemePage() {
 
         {activeTab === 'cores' && (
           <Card>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold text-gray-800">Paleta de Cores</h2>
+                <h2 className="text-lg font-semibold text-slate-800">Paleta de Cores</h2>
                 <div className="flex gap-3">
-                  <button onClick={handleGenerateCss} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition">
+                  <button onClick={handleGenerateCss} className="px-4 py-2 bg-blue-500 hover:bg-slate-900 text-white rounded-lg font-medium text-sm transition">
                     Gerar CSS Base
                   </button>
                   <button onClick={handleSaveColors} disabled={saving} className="px-4 py-2 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white rounded-lg font-medium text-sm transition">
@@ -1133,24 +1137,24 @@ export default function EditThemePage() {
 
               <div className="space-y-6">
                 {Object.entries(colorGroups).map(([groupName, keys]) => (
-                  <div key={groupName} className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4">{groupName}</h3>
+                  <div key={groupName} className="border border-slate-200 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wider mb-4">{groupName}</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {keys.map(key => (
                         <div key={key} className="flex flex-col">
-                          <label className="text-sm font-medium text-gray-700 mb-2">{colorLabels[key]}</label>
-                          <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3 border border-gray-200">
+                          <label className="text-sm font-medium text-slate-700 mb-2">{colorLabels[key]}</label>
+                          <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-3 border border-slate-200">
                             <input 
                               type="color" 
                               value={colors[key as keyof ColorConfig] as string} 
                               onChange={e => setColors({ ...colors, [key]: e.target.value })} 
-                              className="w-10 h-10 rounded cursor-pointer border-2 border-gray-300 p-0" 
+                              className="w-10 h-10 rounded cursor-pointer border-2 border-slate-200 p-0" 
                             />
                             <input 
                               type="text" 
                               value={colors[key as keyof ColorConfig] as string} 
                               onChange={e => setColors({ ...colors, [key]: e.target.value })} 
-                              className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded text-sm font-mono" 
+                              className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded text-sm font-mono" 
                             />
                           </div>
                         </div>
@@ -1161,9 +1165,9 @@ export default function EditThemePage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Preview</h3>
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-semibold text-slate-800 mb-4">Preview</h3>
+              <div className="border border-slate-200 rounded-lg overflow-hidden">
                 {/* Barra Superior */}
                 <div className="p-2 text-center text-sm text-white" style={{ backgroundColor: colors.cor_fundo_barra_superior }}>
                   Frete grátis acima de R$ 299
@@ -1171,16 +1175,16 @@ export default function EditThemePage() {
                 {/* Header */}
                 <div className="p-4" style={{ backgroundColor: colors.cor_fundo_cabecalho }}>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-gray-800">LOGO</span>
+                    <span className="font-bold text-slate-800">LOGO</span>
                     <button className="px-3 py-1.5 rounded text-sm text-white" style={{ backgroundColor: colors.cor_botoes_cabecalho }}>Menu</button>
                   </div>
                 </div>
                 {/* Menu Desktop */}
                 <div className="px-4 py-2" style={{ backgroundColor: colors.cor_fundo_menu_desktop }}>
                   <div className="flex gap-4 text-sm">
-                    <span className="text-gray-700">Categorias</span>
-                    <span className="text-gray-700">Promoções</span>
-                    <span className="text-gray-700">Novidades</span>
+                    <span className="text-slate-700">Categorias</span>
+                    <span className="text-slate-700">Promoções</span>
+                    <span className="text-slate-700">Novidades</span>
                   </div>
                 </div>
                 {/* Conteúdo */}
@@ -1190,11 +1194,11 @@ export default function EditThemePage() {
                     <button className="px-4 py-2 rounded text-white" style={{ backgroundColor: colors.cor_demais_botoes }}>Ver mais</button>
                   </div>
                   <div className="p-4 rounded mb-4" style={{ backgroundColor: colors.cor_detalhes_fundo }}>
-                    <p className="text-sm text-gray-600">Área de detalhes do fundo</p>
+                    <p className="text-sm text-slate-600">Área de detalhes do fundo</p>
                     <a href="#" className="text-sm" style={{ color: colors.cor_detalhes_gerais }}>Link de detalhes gerais</a>
                   </div>
                   <div className="p-4 rounded" style={{ backgroundColor: colors.cor_fundo_banner_catalogo }}>
-                    <p className="text-sm text-gray-600">Banner do Catálogo</p>
+                    <p className="text-sm text-slate-600">Banner do Catálogo</p>
                   </div>
                 </div>
                 {/* Rodapé */}
@@ -1208,29 +1212,29 @@ export default function EditThemePage() {
 
         {activeTab === 'banners' && (
           <Card>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Adicionar Banner</h2>
-              <p className="text-sm text-gray-500 mb-4">Banners são exibidos na home do preview. O primeiro banner é o principal.</p>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4">Adicionar Banner</h2>
+              <p className="text-sm text-slate-500 mb-4">Banners são exibidos na home do preview. O primeiro banner é o principal.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
-                  <input type="text" value={newBanner.name} onChange={e => setNewBanner({ ...newBanner, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800" placeholder="Ex: Promoção de Verão" />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Título *</label>
+                  <input type="text" value={newBanner.name} onChange={e => setNewBanner({ ...newBanner, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800" placeholder="Ex: Promoção de Verão" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Link do Botão (opcional)</label>
-                  <input type="url" value={newBanner.link_url} onChange={e => setNewBanner({ ...newBanner, link_url: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800" placeholder="https://..." />
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Link do Botão (opcional)</label>
+                  <input type="url" value={newBanner.link_url} onChange={e => setNewBanner({ ...newBanner, link_url: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800" placeholder="https://..." />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Imagem Desktop * (1920x600)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Imagem Desktop * (1920x600)</label>
                   <input 
                     type="url" 
                     value={newBanner.image_desktop} 
                     onChange={e => setNewBanner({ ...newBanner, image_desktop: e.target.value })} 
-                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800 mb-2" 
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 mb-2" 
                     placeholder="Cole a URL da imagem aqui..." 
                   />
                   {newBanner.image_desktop && (
@@ -1241,18 +1245,18 @@ export default function EditThemePage() {
                   )}
                   <div className="mt-2 text-center">
                     <input type="file" ref={fileInputDesktop} accept="image/*" onChange={e => handleBannerImageUpload(e, 'desktop')} className="hidden" />
-                    <button onClick={() => fileInputDesktop.current?.click()} disabled={uploading} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
+                    <button onClick={() => fileInputDesktop.current?.click()} disabled={uploading} className="px-4 py-2 bg-slate-100 hover:bg-gray-200 text-slate-700 rounded-lg text-sm">
                       {uploading ? 'Enviando...' : '📤 Ou fazer upload'}
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Imagem Mobile (768x400)</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Imagem Mobile (768x400)</label>
                   <input 
                     type="url" 
                     value={newBanner.image_mobile} 
                     onChange={e => setNewBanner({ ...newBanner, image_mobile: e.target.value })} 
-                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800 mb-2" 
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 mb-2" 
                     placeholder="Cole a URL (opcional, usa desktop se vazio)" 
                   />
                   {newBanner.image_mobile && (
@@ -1263,7 +1267,7 @@ export default function EditThemePage() {
                   )}
                   <div className="mt-2 text-center">
                     <input type="file" ref={fileInputMobile} accept="image/*" onChange={e => handleBannerImageUpload(e, 'mobile')} className="hidden" />
-                    <button onClick={() => fileInputMobile.current?.click()} disabled={uploading} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
+                    <button onClick={() => fileInputMobile.current?.click()} disabled={uploading} className="px-4 py-2 bg-slate-100 hover:bg-gray-200 text-slate-700 rounded-lg text-sm">
                       {uploading ? 'Enviando...' : '📤 Ou fazer upload'}
                     </button>
                   </div>
@@ -1274,7 +1278,7 @@ export default function EditThemePage() {
                 <button 
                   onClick={handleAddDemoBanner} 
                   disabled={saving || !newBanner.name || !newBanner.image_desktop} 
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition"
+                  className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition"
                 >
                   {saving ? 'Salvando...' : 'Adicionar Banner'}
                 </button>
@@ -1284,18 +1288,18 @@ export default function EditThemePage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Banners Cadastrados ({demoBanners.length})</h2>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4">Banners Cadastrados ({demoBanners.length})</h2>
               <div className="space-y-3">
                 {demoBanners.map((banner, index) => (
-                  <div key={banner.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <span className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 font-bold rounded-lg text-sm">{index + 1}</span>
+                  <div key={banner.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="w-8 h-8 flex items-center justify-center bg-blue-100 text-slate-700 font-bold rounded-lg text-sm">{index + 1}</span>
                     <img src={banner.image_desktop} alt={banner.title || 'Banner'} className="h-16 w-28 object-cover rounded border" />
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{banner.title || 'Sem título'}</h4>
-                      <p className="text-sm text-gray-500">{banner.button_link || 'Sem link'}</p>
+                      <h4 className="font-medium text-slate-800">{banner.title || 'Sem título'}</h4>
+                      <p className="text-sm text-slate-500">{banner.button_link || 'Sem link'}</p>
                     </div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${banner.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${banner.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
                       {banner.is_active ? 'Ativo' : 'Inativo'}
                     </span>
                     <div className="flex gap-2">
@@ -1304,7 +1308,7 @@ export default function EditThemePage() {
                   </div>
                 ))}
                 {demoBanners.length === 0 && (
-                  <div className="text-center text-gray-400 py-8">
+                  <div className="text-center text-slate-400 py-8">
                     <div className="text-4xl mb-2">🖼️</div>
                     <p>Nenhum banner cadastrado</p>
                     <p className="text-sm mt-1">Adicione banners para aparecerem no preview</p>
@@ -1337,31 +1341,31 @@ export default function EditThemePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                   <code className="text-xs text-purple-600 font-mono">var(--cor-primaria)</code>
-                  <p className="text-xs text-gray-500 mt-1">Cor principal/destaque</p>
+                  <p className="text-xs text-slate-500 mt-1">Cor principal/destaque</p>
                 </div>
                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                   <code className="text-xs text-purple-600 font-mono">var(--cor-secundaria)</code>
-                  <p className="text-xs text-gray-500 mt-1">Cor secundária</p>
+                  <p className="text-xs text-slate-500 mt-1">Cor secundária</p>
                 </div>
                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                   <code className="text-xs text-purple-600 font-mono">var(--cor-destaque)</code>
-                  <p className="text-xs text-gray-500 mt-1">Botão principal</p>
+                  <p className="text-xs text-slate-500 mt-1">Botão principal</p>
                 </div>
                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                   <code className="text-xs text-purple-600 font-mono">var(--cor-fundo)</code>
-                  <p className="text-xs text-gray-500 mt-1">Fundo da página</p>
+                  <p className="text-xs text-slate-500 mt-1">Fundo da página</p>
                 </div>
                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                   <code className="text-xs text-purple-600 font-mono">var(--cor-detalhes-fundo)</code>
-                  <p className="text-xs text-gray-500 mt-1">Fundos secundários</p>
+                  <p className="text-xs text-slate-500 mt-1">Fundos secundários</p>
                 </div>
                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                   <code className="text-xs text-purple-600 font-mono">var(--cor-fundo-rodape)</code>
-                  <p className="text-xs text-gray-500 mt-1">Cor do rodapé</p>
+                  <p className="text-xs text-slate-500 mt-1">Cor do rodapé</p>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-gray-900 rounded-lg">
-                <p className="text-xs text-gray-400 mb-2">Exemplo de uso:</p>
+                <p className="text-xs text-slate-400 mb-2">Exemplo de uso:</p>
                 <code className="text-xs text-green-400 font-mono">
                   {`<div style="background: var(--cor-primaria); color: white; padding: 20px;">`}<br/>
                   {`  Meu widget com a cor do tema!`}<br/>
@@ -1371,48 +1375,48 @@ export default function EditThemePage() {
             </div>
 
             {/* Adicionar novo widget */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Adicionar Widget HTML</h2>
-              <p className="text-sm text-gray-500 mb-4">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4">Adicionar Widget HTML</h2>
+              <p className="text-sm text-slate-500 mb-4">
                 Widgets permitem adicionar código HTML/CSS personalizado no tema, como integrações de chat, analytics, ou estilos avançados.
               </p>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Widget</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Nome do Widget</label>
                     <input 
                       type="text" 
                       value={newWidget.name} 
                       onChange={e => setNewWidget({ ...newWidget, name: e.target.value })} 
-                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-800" 
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800" 
                       placeholder="Ex: Banner Promocional, Chat WhatsApp, etc."
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Tipo</label>
                     <select 
                       value={newWidget.widget_type} 
                       onChange={e => setNewWidget({ ...newWidget, widget_type: e.target.value as 'html' })} 
-                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-800"
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-slate-800"
                     >
                       <option value="html">HTML Personalizado</option>
                     </select>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Código HTML/CSS/JS</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Código HTML/CSS/JS</label>
                   <textarea 
                     value={newWidget.html_content} 
                     onChange={e => setNewWidget({ ...newWidget, html_content: e.target.value })} 
                     rows={10} 
-                    className="w-full px-4 py-3 bg-gray-900 text-green-400 border border-gray-300 rounded-lg font-mono text-sm" 
+                    className="w-full px-4 py-3 bg-gray-900 text-green-400 border border-slate-200 rounded-lg font-mono text-sm" 
                     placeholder={`<!-- Use var(--cor-primaria) para cores do tema -->\n<style>\n  .meu-widget {\n    background: var(--cor-primaria);\n    padding: 20px;\n    text-align: center;\n  }\n</style>\n\n<div class="meu-widget">\n  <h2>Meu Widget</h2>\n</div>`}
                   />
                 </div>
                 <button 
                   onClick={handleAddWidget} 
                   disabled={saving || !newWidget.name || !newWidget.html_content} 
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium transition"
+                  className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-lg font-medium transition"
                 >
                   Adicionar Widget
                 </button>
@@ -1420,20 +1424,20 @@ export default function EditThemePage() {
             </div>
 
             {/* Lista de widgets */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Widgets Cadastrados</h2>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4">Widgets Cadastrados</h2>
               <div className="space-y-3">
                 {widgets.map((widget, index) => (
-                  <div key={widget.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <span className="text-gray-400 font-mono text-sm mt-1">{index + 1}</span>
+                  <div key={widget.id} className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="text-slate-400 font-mono text-sm mt-1">{index + 1}</span>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-800">{widget.name}</h4>
-                      <p className="text-xs text-gray-500 mt-1">Tipo: {widget.widget_type}</p>
+                      <h4 className="font-medium text-slate-800">{widget.name}</h4>
+                      <p className="text-xs text-slate-500 mt-1">Tipo: {widget.widget_type}</p>
                       <pre className="mt-2 p-2 bg-gray-900 text-green-400 rounded text-xs overflow-x-auto max-h-24">
                         {widget.html_content?.substring(0, 200)}{(widget.html_content?.length || 0) > 200 ? '...' : ''}
                       </pre>
                     </div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${widget.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${widget.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
                       {widget.is_active ? 'Ativo' : 'Inativo'}
                     </span>
                     <div className="flex gap-2">
@@ -1443,7 +1447,7 @@ export default function EditThemePage() {
                   </div>
                 ))}
                 {widgets.length === 0 && (
-                  <div className="text-center text-gray-400 py-12">
+                  <div className="text-center text-slate-400 py-12">
                     <div className="text-4xl mb-2">🧩</div>
                     <p>Nenhum widget cadastrado</p>
                     <p className="text-sm mt-1">Adicione widgets HTML para personalizar o tema</p>
@@ -1455,11 +1459,11 @@ export default function EditThemePage() {
         )}
 
         {activeTab === 'css' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">CSS por Página</h2>
+              <h2 className="text-lg font-semibold text-slate-800">CSS por Página</h2>
               <div className="flex gap-3">
-                <button onClick={handleGenerateCss} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition">
+                <button onClick={handleGenerateCss} className="px-4 py-2 bg-blue-500 hover:bg-slate-900 text-white rounded-lg font-medium text-sm transition">
                   Gerar CSS das Cores
                 </button>
                 <button onClick={handleSaveCss} disabled={saving} className="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded-lg font-medium text-sm transition">
@@ -1472,7 +1476,7 @@ export default function EditThemePage() {
             </div>
             
             {/* Abas das páginas */}
-            <div className="flex gap-1 mb-4 border-b border-gray-200">
+            <div className="flex gap-1 mb-4 border-b border-slate-200">
               {pageTypes.map(page => (
                 <button 
                   key={page.id} 
@@ -1480,7 +1484,7 @@ export default function EditThemePage() {
                   className={`px-4 py-2 font-medium text-sm transition-colors ${
                     activeCssPage === page.id 
                       ? 'text-pink-600 border-b-2 border-pink-500 bg-pink-50' 
-                      : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                   }`}
                 >
                   {page.label}
@@ -1504,7 +1508,7 @@ export default function EditThemePage() {
               value={cssByPage[activeCssPage]} 
               onChange={e => setCssByPage(prev => ({ ...prev, [activeCssPage]: e.target.value }))} 
               rows={25} 
-              className="w-full px-4 py-3 bg-gray-900 text-green-400 border border-gray-300 rounded-lg font-mono text-sm" 
+              className="w-full px-4 py-3 bg-gray-900 text-green-400 border border-slate-200 rounded-lg font-mono text-sm" 
               placeholder={`/* CSS específico para a página ${activeCssPage} */\n\n/* Use as variáveis de cores: */\n/* var(--cor-fundo-pagina) */\n/* var(--cor-botao-enviar-pedido) */\n/* etc... */`} 
             />
           </div>
@@ -1514,17 +1518,17 @@ export default function EditThemePage() {
       {editingWidget && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Editar Widget</h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Editar Widget</h3>
             <div className="space-y-4">
-              <input type="text" value={editingWidget.name} onChange={e => setEditingWidget({ ...editingWidget, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg" />
-              <textarea value={editingWidget.html_content || ''} onChange={e => setEditingWidget({ ...editingWidget, html_content: e.target.value })} rows={8} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg font-mono text-sm" />
+              <input type="text" value={editingWidget.name} onChange={e => setEditingWidget({ ...editingWidget, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg" />
+              <textarea value={editingWidget.html_content || ''} onChange={e => setEditingWidget({ ...editingWidget, html_content: e.target.value })} rows={8} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg font-mono text-sm" />
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={editingWidget.is_active} onChange={e => setEditingWidget({ ...editingWidget, is_active: e.target.checked })} className="w-4 h-4" />
-                <span className="text-gray-700">Ativo</span>
+                <span className="text-slate-700">Ativo</span>
               </label>
               <div className="flex gap-3 pt-2">
                 <button onClick={handleUpdateWidget} disabled={saving} className="px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-lg">Salvar</button>
-                <button onClick={() => setEditingWidget(null)} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg">Cancelar</button>
+                <button onClick={() => setEditingWidget(null)} className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-slate-700 rounded-lg">Cancelar</button>
               </div>
             </div>
           </div>
@@ -1534,22 +1538,22 @@ export default function EditThemePage() {
       {editingBanner && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Editar Banner</h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Editar Banner</h3>
             <div className="space-y-4">
-              <input type="text" value={editingBanner.name} onChange={e => setEditingBanner({ ...editingBanner, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg" placeholder="Nome" />
+              <input type="text" value={editingBanner.name} onChange={e => setEditingBanner({ ...editingBanner, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg" placeholder="Nome" />
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Desktop</label>
+                  <label className="block text-sm text-slate-600 mb-1">Desktop</label>
                   <img src={editingBanner.image_desktop} alt="" className="w-full h-24 object-cover rounded border mb-2" />
-                  <input type="url" value={editingBanner.image_desktop} onChange={e => setEditingBanner({ ...editingBanner, image_desktop: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" />
+                  <input type="url" value={editingBanner.image_desktop} onChange={e => setEditingBanner({ ...editingBanner, image_desktop: e.target.value })} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Mobile</label>
+                  <label className="block text-sm text-slate-600 mb-1">Mobile</label>
                   <img src={editingBanner.image_mobile || ''} alt="" className="w-full h-24 object-cover rounded border mb-2" />
-                  <input type="url" value={editingBanner.image_mobile || ''} onChange={e => setEditingBanner({ ...editingBanner, image_mobile: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm" />
+                  <input type="url" value={editingBanner.image_mobile || ''} onChange={e => setEditingBanner({ ...editingBanner, image_mobile: e.target.value })} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm" />
                 </div>
               </div>
-              <input type="url" value={editingBanner.link_url || ''} onChange={e => setEditingBanner({ ...editingBanner, link_url: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg" placeholder="Link" />
+              <input type="url" value={editingBanner.link_url || ''} onChange={e => setEditingBanner({ ...editingBanner, link_url: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg" placeholder="Link" />
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={editingBanner.is_active} onChange={e => setEditingBanner({ ...editingBanner, is_active: e.target.checked })} className="w-4 h-4" />
                 <span className="text-slate-300">Ativo</span>
