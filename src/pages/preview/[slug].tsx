@@ -429,13 +429,21 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                       '--cor-texto': '#333333',
                     } as React.CSSProperties}
                   >
-                    {widgets.filter(w => w.is_active).sort((a, b) => a.display_order - b.display_order).map(widget => (
-                      <div 
-                        key={widget.id}
-                        className="widget"
-                        dangerouslySetInnerHTML={{ __html: widget.html_content || '' }}
-                      />
-                    ))}
+                    {/* Filtrar widgets: se tiver widget_ids, mostrar só os selecionados */}
+                    {(() => {
+                      const sectionData = section as any
+                      const filteredWidgets = sectionData.widget_ids && sectionData.widget_ids.length > 0
+                        ? widgets.filter(w => w.is_active && sectionData.widget_ids.includes(w.id))
+                        : widgets.filter(w => w.is_active)
+                      
+                      return filteredWidgets.sort((a, b) => a.display_order - b.display_order).map(widget => (
+                        <div 
+                          key={widget.id}
+                          className="widget"
+                          dangerouslySetInnerHTML={{ __html: widget.html_content || '' }}
+                        />
+                      ))
+                    })()}
                   </div>
                 )}
 

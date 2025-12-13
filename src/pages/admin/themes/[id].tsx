@@ -120,9 +120,11 @@ export default function EditThemePage() {
   // Carrosséis customizados de produtos
   const [customCarousels, setCustomCarousels] = useState<{id: string, name: string, category: string, enabled: boolean, order: number}[]>([])
   const [showAddCarousel, setShowAddCarousel] = useState(false)
+  const [showAddWidget, setShowAddWidget] = useState(false)
   const [newCarouselName, setNewCarouselName] = useState('')
   const [newCarouselCategory, setNewCarouselCategory] = useState('')
   const [selectedCarouselProducts, setSelectedCarouselProducts] = useState<string[]>([]) // IDs dos produtos selecionados
+  const [selectedLayoutWidgets, setSelectedLayoutWidgets] = useState<string[]>([]) // IDs dos widgets selecionados
   
   // Drag and drop
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
@@ -729,6 +731,11 @@ export default function EditThemePage() {
                             Categoria: {(section as any).category}
                           </span>
                         )}
+                        {section.type === 'widgets' && (section as any).widget_ids && (
+                          <span className="text-xs text-yellow-600 ml-2 px-2 py-0.5 bg-yellow-50 rounded">
+                            {(section as any).widget_ids.length} widget(s)
+                          </span>
+                        )}
                       </div>
                       
                       {/* Toggle ativo/inativo */}
@@ -743,8 +750,8 @@ export default function EditThemePage() {
                         {section.enabled ? '✓ Ativo' : 'Inativo'}
                       </button>
                       
-                      {/* Botão deletar (só para carrosséis customizados) */}
-                      {section.type === 'carousel_custom' && (
+                      {/* Botão deletar (só para carrosséis e widgets customizados) */}
+                      {(section.type === 'carousel_custom' || (section.type === 'widgets' && section.id.startsWith('widget_section_'))) && (
                         <button 
                           onClick={() => {
                             const newSections = layoutConfig.sections.filter(s => s.id !== section.id)
@@ -766,7 +773,7 @@ export default function EditThemePage() {
                 <div className="border-t border-gray-200 pt-6">
                   <h3 className="text-sm font-semibold text-gray-700 mb-4">➕ Adicionar Nova Seção</h3>
                   
-                  {!showAddCarousel ? (
+                  {!showAddCarousel && !showAddWidget ? (
                     <div className="flex flex-wrap gap-3">
                       <button
                         onClick={() => setShowAddCarousel(true)}
@@ -775,20 +782,125 @@ export default function EditThemePage() {
                         🎠 Carrossel de Produtos
                       </button>
                       <button
-                        onClick={() => {
-                          const newSection = {
-                            id: `widget_${Date.now()}`,
-                            type: 'widgets' as const,
-                            label: 'Widget Personalizado',
-                            enabled: true,
-                            order: layoutConfig.sections.length + 1
-                          }
-                          setLayoutConfig({ ...layoutConfig, sections: [...layoutConfig.sections, newSection] })
-                        }}
+                        onClick={() => setShowAddWidget(true)}
                         className="px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium text-sm transition flex items-center gap-2"
                       >
                         🧩 Widget HTML
                       </button>
+                    </div>
+                  ) : showAddWidget ? (
+                    /* ===== FORMULÁRIO PARA ADICIONAR WIDGET ===== */
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <h4 className="font-medium text-yellow-800 mb-3">🧩 Adicionar Widgets ao Layout</h4>
+                      
+                      {/* Lista de widgets para seleção */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Selecione os Widgets ({selectedLayoutWidgets.length} selecionados)
+                        </label>
+                        
+                        {widgets.length === 0 ? (
+                          <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 text-yellow-800">
+                            <p>⚠️ Nenhum widget cadastrado. Cadastre widgets primeiro na aba &quot;Widgets&quot;.</p>
+                          </div>
+                        ) : (
+                          <div className="max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-lg">
+                            {widgets.map(widget => (
+                              <label 
+                                key={widget.id} 
+                                className={`flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                                  selectedLayoutWidgets.includes(widget.id) ? 'bg-yellow-50' : ''
+                                }`}
+                              >
+                                <input 
+                                  type="checkbox"
+                                  checked={selectedLayoutWidgets.includes(widget.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedLayoutWidgets([...selectedLayoutWidgets, widget.id])
+                                    } else {
+                                      setSelectedLayoutWidgets(selectedLayoutWidgets.filter(id => id !== widget.id))
+                                    }
+                                  }}
+                                  className="w-5 h-5 text-yellow-600 rounded"
+                                />
+                                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center text-xl">
+                                  🧩
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-800">{widget.name}</p>
+                                  <p className="text-sm text-gray-500">
+                                    {widget.widget_type === 'html' ? 'HTML Personalizado' : widget.widget_type}
+                                    {widget.is_active ? ' • ✅ Ativo' : ' • ❌ Inativo'}
+                                  </p>
+                                </div>
+                                {/* Preview do HTML (primeiros 50 chars) */}
+                                <div className="text-xs text-gray-400 max-w-[150px] truncate">
+                                  {widget.html_content?.substring(0, 50)}...
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Botões de seleção rápida */}
+                        {widgets.length > 0 && (
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedLayoutWidgets(widgets.map(w => w.id))}
+                              className="px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded-lg"
+                            >
+                              Selecionar Todos
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedLayoutWidgets([])}
+                              className="px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded-lg"
+                            >
+                              Limpar Seleção
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Botões de ação */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            if (selectedLayoutWidgets.length > 0) {
+                              const newSection = {
+                                id: `widget_section_${Date.now()}`,
+                                type: 'widgets' as const,
+                                label: `Widgets (${selectedLayoutWidgets.length})`,
+                                widget_ids: selectedLayoutWidgets,
+                                enabled: true,
+                                order: layoutConfig.sections.length + 1
+                              }
+                              setLayoutConfig({ 
+                                ...layoutConfig, 
+                                sections: [...layoutConfig.sections, newSection as any] 
+                              })
+                              setSelectedLayoutWidgets([])
+                              setShowAddWidget(false)
+                              showMessage('success', `Seção de widgets criada com ${selectedLayoutWidgets.length} widget(s)!`)
+                            }
+                          }}
+                          disabled={selectedLayoutWidgets.length === 0}
+                          className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 text-white rounded-lg text-sm"
+                        >
+                          Adicionar Widgets ({selectedLayoutWidgets.length})
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowAddWidget(false)
+                            setSelectedLayoutWidgets([])
+                          }}
+                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
                     </div>
                   ) : (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

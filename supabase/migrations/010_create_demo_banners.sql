@@ -3,7 +3,7 @@
 -- =====================================================
 -- Execute no SQL Editor do Supabase
 
--- Criar tabela demo_banners
+-- Criar tabela demo_banners (se não existir)
 CREATE TABLE IF NOT EXISTS demo_banners (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   theme_id UUID NOT NULL REFERENCES themes(id) ON DELETE CASCADE,
@@ -19,11 +19,17 @@ CREATE TABLE IF NOT EXISTS demo_banners (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Criar índice para busca por theme_id
+-- Criar índice para busca por theme_id (se não existir)
 CREATE INDEX IF NOT EXISTS idx_demo_banners_theme_id ON demo_banners(theme_id);
 
 -- Habilitar RLS (Row Level Security)
 ALTER TABLE demo_banners ENABLE ROW LEVEL SECURITY;
+
+-- Dropar políticas existentes (se existirem) e recriar
+DROP POLICY IF EXISTS "Allow public read demo_banners" ON demo_banners;
+DROP POLICY IF EXISTS "Allow authenticated insert demo_banners" ON demo_banners;
+DROP POLICY IF EXISTS "Allow authenticated update demo_banners" ON demo_banners;
+DROP POLICY IF EXISTS "Allow authenticated delete demo_banners" ON demo_banners;
 
 -- Política para permitir leitura pública
 CREATE POLICY "Allow public read demo_banners" ON demo_banners

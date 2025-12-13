@@ -29,7 +29,9 @@ export type LayoutSection = {
   label: string
   enabled: boolean
   order: number
-  category?: string  // Para carrosséis customizados
+  category?: string      // Para carrosséis customizados (legado)
+  product_ids?: string[] // IDs dos produtos selecionados para carrossel
+  widget_ids?: string[]  // IDs dos widgets selecionados para seção de widgets
 }
 
 // Configuração de layout do tema
