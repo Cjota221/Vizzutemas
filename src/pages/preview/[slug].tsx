@@ -463,11 +463,17 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                         ? widgets.filter(w => w.is_active && sectionData.widget_ids.includes(w.id))
                         : widgets.filter(w => w.is_active)
                       
-                      return filteredWidgets.sort((a, b) => a.display_order - b.display_order).map(widget => (
+                      return filteredWidgets.sort((a, b) => a.display_order - b.display_order).map((widget, idx) => (
                         <div 
                           key={widget.id}
                           className="widget"
-                          dangerouslySetInnerHTML={{ __html: widget.html_content || '' }}
+                          dangerouslySetInnerHTML={{ 
+                            // Encapsula scripts em IIFE para evitar conflitos de variáveis
+                            __html: (widget.html_content || '').replace(
+                              /<script>([\s\S]*?)<\/script>/gi, 
+                              (match, code) => `<script>(function(){${code}})();</script>`
+                            )
+                          }}
                         />
                       ))
                     })()}
