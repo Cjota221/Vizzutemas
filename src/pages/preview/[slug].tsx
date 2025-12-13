@@ -1,11 +1,111 @@
 import { GetServerSideProps } from 'next'
 import Link from 'next/link'
 import Head from 'next/head'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { getThemeBySlug, generateBaseCss, getActiveWidgetsByTheme } from '@/lib/supabase/themes'
 import { getProducts, getDemoBanners, getStoreConfig } from '@/lib/supabase/store'
 import { ColorConfig, ThemeWidget, LayoutConfig } from '@/lib/types'
 import type { DemoProduct, DemoBanner, StoreConfig } from '@/lib/supabase/store'
+
+// Componente de Carrossel de Produtos
+function ProductCarousel({ 
+  title, 
+  products, 
+  colors, 
+  onAddCart, 
+  btnText 
+}: { 
+  title: string
+  products: DemoProduct[]
+  colors: ColorConfig
+  onAddCart: () => void
+  btnText: string
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 220 // largura de cada card + gap
+      scrollRef.current.scrollBy({ 
+        left: direction === 'left' ? -scrollAmount * 3 : scrollAmount * 3, 
+        behavior: 'smooth' 
+      })
+    }
+  }
+
+  if (products.length === 0) return null
+
+  return (
+    <div className="mb-8">
+      {/* Título da Faixa */}
+      <div className="flex items-center justify-between px-4 mb-3">
+        <h2 className="text-lg font-bold" style={{ color: colors.cor_detalhes_gerais }}>
+          {title}
+        </h2>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => scroll('left')}
+            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button 
+            onClick={() => scroll('right')}
+            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Carrossel */}
+      <div 
+        ref={scrollRef}
+        className="flex gap-3 overflow-x-auto scrollbar-hide px-4 pb-2 snap-x snap-mandatory"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {products.map(product => (
+          <div 
+            key={product.id} 
+            className="flex-shrink-0 w-[160px] bg-white rounded-xl shadow-sm overflow-hidden border hover:shadow-md transition-shadow snap-start"
+          >
+            <div className="aspect-square bg-gray-100 relative">
+              <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+              {product.badge && (
+                <span 
+                  className="absolute top-2 left-2 px-2 py-0.5 text-xs font-bold text-white rounded"
+                  style={{ backgroundColor: colors.cor_detalhes_gerais }}
+                >
+                  {product.badge === 'destaque' ? '⭐' : product.badge === 'novo' ? '🆕' : product.badge === 'promocao' ? '🔥' : '🏆'}
+                </span>
+              )}
+            </div>
+            <div className="p-2">
+              <h3 className="text-xs font-medium text-gray-800 line-clamp-2 mb-1 h-8">{product.name}</h3>
+              {product.original_price && (
+                <p className="text-xs text-gray-400 line-through">R$ {product.original_price.toFixed(2)}</p>
+              )}
+              <p className="text-sm font-bold" style={{ color: colors.cor_detalhes_gerais }}>
+                R$ {product.price.toFixed(2)}
+              </p>
+              <button 
+                onClick={onAddCart} 
+                className="w-full mt-2 py-1.5 text-white text-xs font-medium rounded-lg transition"
+                style={{ backgroundColor: colors.cor_botao_enviar_pedido }}
+              >
+                {btnText}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 type Props = {
   theme: { id: string; name: string; slug: string }
@@ -154,7 +254,7 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
               </button>
             </div>
 
-            {/* Barra de Busca */}
+            {/* Barra de Busca - Lupa do lado direito */}
             <div className="mt-3">
               <div className="relative">
                 <input
@@ -162,10 +262,10 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                   placeholder="O que você procura?"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2.5 pl-10 rounded-full border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+                  className="w-full px-4 py-2.5 pr-10 rounded-full border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
                   style={{ backgroundColor: colors.cor_detalhes_fundo }}
                 />
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
@@ -223,64 +323,70 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
             </div>
           )}
 
-          {/* Produtos */}
-          <div className="px-4 py-6">
-            <h2 className="text-xl font-bold mb-4" style={{ color: colors.cor_detalhes_gerais }}>
-              Nossos Produtos
-            </h2>
-
+          {/* Produtos em Carrosséis por Categoria */}
+          <div className="py-6">
             {products.length === 0 ? (
-              <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <div className="text-center py-12 bg-gray-50 rounded-lg mx-4">
                 <p className="text-gray-500 mb-4">Nenhum produto cadastrado ainda.</p>
                 <Link href={`/admin/themes/${theme.id}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                   Cadastrar Produtos
                 </Link>
               </div>
             ) : (
-              <div className={`grid gap-3 ${
-                isMobile 
-                  ? 'grid-cols-2' 
-                  : layoutConfig.products_per_row === 6 
-                    ? 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6' 
-                    : layoutConfig.products_per_row === 5 
-                      ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' 
-                      : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-              }`}>
-                {products.filter(p => p.is_active).map(product => (
-                  <div 
-                    key={product.id} 
-                    className="bg-white rounded-xl shadow-sm overflow-hidden border hover:shadow-md transition-shadow"
-                  >
-                    <div className="aspect-square bg-gray-100 relative">
-                      <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-                      {product.badge && (
-                        <span 
-                          className="absolute top-2 left-2 px-2 py-0.5 text-xs font-bold text-white rounded"
-                          style={{ backgroundColor: colors.cor_detalhes_gerais }}
-                        >
-                          {product.badge === 'destaque' ? '⭐' : product.badge === 'novo' ? '🆕' : product.badge === 'promocao' ? '🔥' : '🏆'}
-                        </span>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <h3 className="text-sm font-medium text-gray-800 line-clamp-2 mb-1">{product.name}</h3>
-                      {product.original_price && (
-                        <p className="text-xs text-gray-400 line-through">R$ {product.original_price.toFixed(2)}</p>
-                      )}
-                      <p className="text-lg font-bold" style={{ color: colors.cor_detalhes_gerais }}>
-                        R$ {product.price.toFixed(2)}
-                      </p>
-                      <button 
-                        onClick={() => setCartCount(c => c + 1)} 
-                        className="w-full mt-2 py-2 text-white text-sm font-medium rounded-lg transition"
-                        style={{ backgroundColor: colors.cor_botao_enviar_pedido }}
-                      >
-                        {storeConfig?.btn_buy_text || 'COMPRAR'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <>
+                {/* Faixa: Lançamentos */}
+                {products.filter(p => p.is_active && p.badge === 'novo').length > 0 && (
+                  <ProductCarousel 
+                    title="🆕 Lançamentos" 
+                    products={products.filter(p => p.is_active && p.badge === 'novo')}
+                    colors={colors}
+                    onAddCart={() => setCartCount(c => c + 1)}
+                    btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                  />
+                )}
+
+                {/* Faixa: Destaques */}
+                {products.filter(p => p.is_active && p.badge === 'destaque').length > 0 && (
+                  <ProductCarousel 
+                    title="⭐ Destaques" 
+                    products={products.filter(p => p.is_active && p.badge === 'destaque')}
+                    colors={colors}
+                    onAddCart={() => setCartCount(c => c + 1)}
+                    btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                  />
+                )}
+
+                {/* Faixa: Promoções */}
+                {products.filter(p => p.is_active && p.badge === 'promocao').length > 0 && (
+                  <ProductCarousel 
+                    title="🔥 Promoções" 
+                    products={products.filter(p => p.is_active && p.badge === 'promocao')}
+                    colors={colors}
+                    onAddCart={() => setCartCount(c => c + 1)}
+                    btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                  />
+                )}
+
+                {/* Faixa: Mais Vendidos */}
+                {products.filter(p => p.is_active && p.badge === 'mais_vendido').length > 0 && (
+                  <ProductCarousel 
+                    title="🏆 Mais Vendidos" 
+                    products={products.filter(p => p.is_active && p.badge === 'mais_vendido')}
+                    colors={colors}
+                    onAddCart={() => setCartCount(c => c + 1)}
+                    btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                  />
+                )}
+
+                {/* Faixa: Todos os Produtos (sem badge específico) */}
+                <ProductCarousel 
+                  title="🛍️ Todos os Produtos" 
+                  products={products.filter(p => p.is_active)}
+                  colors={colors}
+                  onAddCart={() => setCartCount(c => c + 1)}
+                  btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                />
+              </>
             )}
           </div>
 
