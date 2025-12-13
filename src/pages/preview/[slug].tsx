@@ -132,7 +132,7 @@ function ProductCarousel({
             {/* Conteúdo */}
             <div className="p-3 text-center">
               {/* Nome do produto */}
-              <h3 className="text-sm font-medium text-gray-800 line-clamp-2 mb-2 min-h-[40px]">{product.name}</h3>
+              <h3 className="text-xs font-medium text-gray-800 line-clamp-2 mb-2 min-h-[40px]">{product.name}</h3>
               
               {/* Preço */}
               {product.original_price && (
@@ -194,6 +194,89 @@ type Props = {
   layoutConfig: LayoutConfig
   storeConfig: StoreConfig | null
   injectedCss: string
+}
+
+// Componente para renderizar um widget individual com scripts funcionando
+function WidgetRenderer({ 
+  widget, 
+  colors 
+}: { 
+  widget: ThemeWidget
+  colors: ColorConfig 
+}) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  useEffect(() => {
+    if (!containerRef.current || !widget.html_content) return
+    
+    // Separar HTML de Scripts
+    const htmlWithoutScripts = widget.html_content.replace(/<script[\s\S]*?<\/script>/gi, '')
+    const scripts: string[] = []
+    widget.html_content.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, (match, code) => {
+      scripts.push(code)
+      return ''
+    })
+    
+    // Inserir HTML
+    containerRef.current.innerHTML = htmlWithoutScripts
+    
+    // Executar scripts em escopo isolado (IIFE)
+    scripts.forEach((code, index) => {
+      try {
+        // Criar função isolada para cada script
+        const isolatedScript = `(function() {
+          try {
+            ${code}
+          } catch(e) {
+            console.warn('Widget script error:', e);
+          }
+        })();`
+        
+        const scriptElement = document.createElement('script')
+        scriptElement.textContent = isolatedScript
+        containerRef.current?.appendChild(scriptElement)
+      } catch (error) {
+        console.warn(`Widget ${widget.id} script ${index} error:`, error)
+      }
+    })
+    
+    // Cleanup: remover scripts ao desmontar
+    return () => {
+      if (containerRef.current) {
+        const scripts = containerRef.current.querySelectorAll('script')
+        scripts.forEach(s => s.remove())
+      }
+    }
+  }, [widget.html_content, widget.id])
+  
+  return (
+    <div 
+      ref={containerRef}
+      className="widget"
+      style={{
+        // Variáveis CSS disponíveis para os widgets
+        '--cor-fundo-pagina': colors.cor_fundo_pagina,
+        '--cor-detalhes-fundo': colors.cor_detalhes_fundo,
+        '--cor-fundo-barra-superior': colors.cor_fundo_barra_superior,
+        '--cor-botoes-cabecalho': colors.cor_botoes_cabecalho,
+        '--cor-fundo-cabecalho': colors.cor_fundo_cabecalho,
+        '--cor-botao-enviar-pedido': colors.cor_botao_enviar_pedido,
+        '--cor-demais-botoes': colors.cor_demais_botoes,
+        '--cor-detalhes-gerais': colors.cor_detalhes_gerais,
+        '--cor-fundo-banner-catalogo': colors.cor_fundo_banner_catalogo,
+        '--cor-fundo-menu-desktop': colors.cor_fundo_menu_desktop,
+        '--cor-fundo-submenu-desktop': colors.cor_fundo_submenu_desktop,
+        '--cor-fundo-menu-mobile': colors.cor_fundo_menu_mobile,
+        '--cor-fundo-rodape': colors.cor_fundo_rodape,
+        // Aliases mais simples
+        '--cor-primaria': colors.cor_detalhes_gerais,
+        '--cor-secundaria': colors.cor_demais_botoes,
+        '--cor-destaque': colors.cor_botao_enviar_pedido,
+        '--cor-fundo': colors.cor_fundo_pagina,
+        '--cor-texto': '#333333',
+      } as React.CSSProperties}
+    />
+  )
 }
 
 const defaultColors: ColorConfig = {
@@ -444,33 +527,9 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                   </div>
                 )}
 
-                {/* Widgets - TEMPORARIAMENTE DESABILITADO para destravar */}
-                {section.type === 'widgets' && widgets.length > 0 && false && (
-                  <div 
-                    className="widgets-section w-full overflow-hidden"
-                    style={{
-                      // Variáveis CSS disponíveis para os widgets
-                      '--cor-fundo-pagina': colors.cor_fundo_pagina,
-                      '--cor-detalhes-fundo': colors.cor_detalhes_fundo,
-                      '--cor-fundo-barra-superior': colors.cor_fundo_barra_superior,
-                      '--cor-botoes-cabecalho': colors.cor_botoes_cabecalho,
-                      '--cor-fundo-cabecalho': colors.cor_fundo_cabecalho,
-                      '--cor-botao-enviar-pedido': colors.cor_botao_enviar_pedido,
-                      '--cor-demais-botoes': colors.cor_demais_botoes,
-                      '--cor-detalhes-gerais': colors.cor_detalhes_gerais,
-                      '--cor-fundo-banner-catalogo': colors.cor_fundo_banner_catalogo,
-                      '--cor-fundo-menu-desktop': colors.cor_fundo_menu_desktop,
-                      '--cor-fundo-submenu-desktop': colors.cor_fundo_submenu_desktop,
-                      '--cor-fundo-menu-mobile': colors.cor_fundo_menu_mobile,
-                      '--cor-fundo-rodape': colors.cor_fundo_rodape,
-                      // Aliases mais simples
-                      '--cor-primaria': colors.cor_detalhes_gerais,
-                      '--cor-secundaria': colors.cor_demais_botoes,
-                      '--cor-destaque': colors.cor_botao_enviar_pedido,
-                      '--cor-fundo': colors.cor_fundo_pagina,
-                      '--cor-texto': '#333333',
-                    } as React.CSSProperties}
-                  >
+                {/* Widgets */}
+                {section.type === 'widgets' && widgets.length > 0 && (
+                  <div className="widgets-section w-full overflow-hidden">
                     {/* CSS base para responsividade dos widgets */}
                     <style dangerouslySetInnerHTML={{ __html: `
                       .widgets-section .widget {
@@ -499,26 +558,18 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                       }
                     `}} />
                     
-                    {/* Filtrar widgets: se tiver widget_ids, mostrar só os selecionados */}
+                    {/* Renderizar widgets usando componente isolado */}
                     {(() => {
                       const sectionData = section as any
                       const filteredWidgets = sectionData.widget_ids && sectionData.widget_ids.length > 0
                         ? widgets.filter(w => w.is_active && sectionData.widget_ids.includes(w.id))
                         : widgets.filter(w => w.is_active)
                       
-                      return filteredWidgets.sort((a, b) => a.display_order - b.display_order).map((widget, idx) => (
-                        <div 
-                          key={widget.id}
-                          className="widget"
-                          dangerouslySetInnerHTML={{ 
-                            // Encapsula scripts em IIFE para evitar conflitos de variáveis
-                            __html: (widget.html_content || '').replace(
-                              /<script>([\s\S]*?)<\/script>/gi, 
-                              (match, code) => `<script>(function(){${code}})();</script>`
-                            )
-                          }}
-                        />
-                      ))
+                      return filteredWidgets
+                        .sort((a, b) => a.display_order - b.display_order)
+                        .map(widget => (
+                          <WidgetRenderer key={widget.id} widget={widget} colors={colors} />
+                        ))
                     })()}
                   </div>
                 )}
