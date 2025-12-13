@@ -295,100 +295,170 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
             </div>
           )}
 
-          {/* Banners */}
-          {banners.length > 0 && (
-            <div className="mb-4">
-              {banners.filter(b => b.is_active).map(banner => (
-                <div key={banner.id} className="w-full">
-                  <img 
-                    src={isMobile && banner.image_mobile ? banner.image_mobile : banner.image_desktop} 
-                    alt={banner.title || 'Banner'} 
-                    className="w-full h-auto object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          {/* ===== RENDERIZAÇÃO DAS SEÇÕES BASEADO NO LAYOUT CONFIG ===== */}
+          {layoutConfig.sections
+            .filter(s => s.enabled)
+            .sort((a, b) => a.order - b.order)
+            .map(section => (
+              <div key={section.id}>
+                {/* Banner Principal */}
+                {section.type === 'banner_principal' && banners.length > 0 && (
+                  <div className="banner-principal">
+                    {banners.filter(b => b.is_active).slice(0, 1).map(banner => (
+                      <div key={banner.id} className="w-full relative">
+                        <img 
+                          src={isMobile && banner.image_mobile ? banner.image_mobile : banner.image_desktop} 
+                          alt={banner.title || 'Banner Principal'} 
+                          className="w-full h-auto object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-          {/* Widgets HTML (se houver) */}
-          {widgets.length > 0 && (
-            <div className="widgets-container">
-              {widgets.filter(w => w.is_active).map(widget => (
-                <div 
-                  key={widget.id}
-                  className="widget mb-4"
-                  dangerouslySetInnerHTML={{ __html: widget.html_content || '' }}
-                />
-              ))}
-            </div>
-          )}
+                {/* Banner de Categorias (banners secundários) */}
+                {section.type === 'banner_categorias' && banners.length > 1 && (
+                  <div className="banner-categorias px-4 py-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {banners.filter(b => b.is_active).slice(1).map(banner => (
+                        <a key={banner.id} href={banner.button_link || '#'} className="block rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
+                          <img 
+                            src={banner.image_desktop} 
+                            alt={banner.title || 'Categoria'} 
+                            className="w-full h-32 object-cover"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-          {/* Produtos em Carrosséis por Categoria */}
-          <div className="py-6">
-            {products.length === 0 ? (
-              <div className="text-center py-12 bg-gray-50 rounded-lg mx-4">
-                <p className="text-gray-500 mb-4">Nenhum produto cadastrado ainda.</p>
-                <Link href={`/admin/themes/${theme.id}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                  Cadastrar Produtos
-                </Link>
+                {/* Widgets */}
+                {section.type === 'widgets' && widgets.length > 0 && (
+                  <div className="widgets-section">
+                    {widgets.filter(w => w.is_active).sort((a, b) => a.display_order - b.display_order).map(widget => (
+                      <div 
+                        key={widget.id}
+                        className="widget"
+                        dangerouslySetInnerHTML={{ __html: widget.html_content || '' }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Produtos */}
+                {section.type === 'produtos' && (
+                  <div className="produtos-section py-6">
+                    {products.length === 0 ? (
+                      <div className="text-center py-12 bg-gray-50 rounded-lg mx-4">
+                        <p className="text-gray-500 mb-4">Nenhum produto cadastrado ainda.</p>
+                        <Link href={`/admin/themes/${theme.id}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                          Cadastrar Produtos
+                        </Link>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Faixa: Lançamentos */}
+                        {products.filter(p => p.is_active && p.badge === 'novo').length > 0 && (
+                          <ProductCarousel 
+                            title="🆕 Lançamentos" 
+                            products={products.filter(p => p.is_active && p.badge === 'novo')}
+                            colors={colors}
+                            onAddCart={() => setCartCount(c => c + 1)}
+                            btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                          />
+                        )}
+
+                        {/* Faixa: Destaques */}
+                        {products.filter(p => p.is_active && p.badge === 'destaque').length > 0 && (
+                          <ProductCarousel 
+                            title="⭐ Destaques" 
+                            products={products.filter(p => p.is_active && p.badge === 'destaque')}
+                            colors={colors}
+                            onAddCart={() => setCartCount(c => c + 1)}
+                            btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                          />
+                        )}
+
+                        {/* Faixa: Promoções */}
+                        {products.filter(p => p.is_active && p.badge === 'promocao').length > 0 && (
+                          <ProductCarousel 
+                            title="🔥 Promoções" 
+                            products={products.filter(p => p.is_active && p.badge === 'promocao')}
+                            colors={colors}
+                            onAddCart={() => setCartCount(c => c + 1)}
+                            btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                          />
+                        )}
+
+                        {/* Faixa: Mais Vendidos */}
+                        {products.filter(p => p.is_active && p.badge === 'mais_vendido').length > 0 && (
+                          <ProductCarousel 
+                            title="🏆 Mais Vendidos" 
+                            products={products.filter(p => p.is_active && p.badge === 'mais_vendido')}
+                            colors={colors}
+                            onAddCart={() => setCartCount(c => c + 1)}
+                            btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                          />
+                        )}
+
+                        {/* Faixa: Todos os Produtos */}
+                        <ProductCarousel 
+                          title="🛍️ Todos os Produtos" 
+                          products={products.filter(p => p.is_active)}
+                          colors={colors}
+                          onAddCart={() => setCartCount(c => c + 1)}
+                          btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                        />
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Avaliações */}
+                {section.type === 'avaliacoes' && (
+                  <div className="avaliacoes-section py-6 px-4" style={{ backgroundColor: colors.cor_detalhes_fundo }}>
+                    <h2 className="text-lg font-bold mb-4" style={{ color: colors.cor_detalhes_gerais }}>
+                      ⭐ Avaliações dos Clientes
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="bg-white p-4 rounded-lg shadow-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-yellow-500">★★★★★</span>
+                            <span className="text-sm text-gray-500">Cliente {i}</span>
+                          </div>
+                          <p className="text-sm text-gray-600">Produto excelente! Recomendo muito.</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Informações da Loja */}
+                {section.type === 'info_loja' && (
+                  <div className="info-loja-section py-6 px-4">
+                    <h2 className="text-lg font-bold mb-4" style={{ color: colors.cor_detalhes_gerais }}>
+                      📍 Sobre a Loja
+                    </h2>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm text-gray-600">{storeConfig?.footer_about || 'Sua loja de confiança para as melhores ofertas.'}</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : (
-              <>
-                {/* Faixa: Lançamentos */}
-                {products.filter(p => p.is_active && p.badge === 'novo').length > 0 && (
-                  <ProductCarousel 
-                    title="🆕 Lançamentos" 
-                    products={products.filter(p => p.is_active && p.badge === 'novo')}
-                    colors={colors}
-                    onAddCart={() => setCartCount(c => c + 1)}
-                    btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
-                  />
-                )}
+            ))
+          }
 
-                {/* Faixa: Destaques */}
-                {products.filter(p => p.is_active && p.badge === 'destaque').length > 0 && (
-                  <ProductCarousel 
-                    title="⭐ Destaques" 
-                    products={products.filter(p => p.is_active && p.badge === 'destaque')}
-                    colors={colors}
-                    onAddCart={() => setCartCount(c => c + 1)}
-                    btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
-                  />
-                )}
-
-                {/* Faixa: Promoções */}
-                {products.filter(p => p.is_active && p.badge === 'promocao').length > 0 && (
-                  <ProductCarousel 
-                    title="🔥 Promoções" 
-                    products={products.filter(p => p.is_active && p.badge === 'promocao')}
-                    colors={colors}
-                    onAddCart={() => setCartCount(c => c + 1)}
-                    btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
-                  />
-                )}
-
-                {/* Faixa: Mais Vendidos */}
-                {products.filter(p => p.is_active && p.badge === 'mais_vendido').length > 0 && (
-                  <ProductCarousel 
-                    title="🏆 Mais Vendidos" 
-                    products={products.filter(p => p.is_active && p.badge === 'mais_vendido')}
-                    colors={colors}
-                    onAddCart={() => setCartCount(c => c + 1)}
-                    btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
-                  />
-                )}
-
-                {/* Faixa: Todos os Produtos (sem badge específico) */}
-                <ProductCarousel 
-                  title="🛍️ Todos os Produtos" 
-                  products={products.filter(p => p.is_active)}
-                  colors={colors}
-                  onAddCart={() => setCartCount(c => c + 1)}
-                  btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
-                />
-              </>
-            )}
-          </div>
+          {/* Debug: Mostrar se não há banners */}
+          {banners.length === 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mx-4 my-4 text-center">
+              <p className="text-yellow-700 text-sm">⚠️ Nenhum banner cadastrado na tabela demo_banners.</p>
+              <Link href={`/admin/themes/${theme.id}`} className="text-blue-600 underline text-sm">
+                Cadastrar Banners
+              </Link>
+            </div>
+          )}
 
           {/* Rodapé */}
           <footer 
