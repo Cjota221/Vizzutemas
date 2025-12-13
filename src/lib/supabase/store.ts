@@ -715,6 +715,48 @@ export async function getDemoBanners(themeId: string): Promise<DemoBanner[]> {
   return data as DemoBanner[]
 }
 
+export async function createDemoBanner(banner: Partial<DemoBanner>): Promise<DemoBanner | null> {
+  const { data, error } = await supabase
+    .from('demo_banners')
+    .insert(banner)
+    .select()
+    .single()
+  
+  if (error) {
+    console.error('Erro ao criar banner demo:', error)
+    return null
+  }
+  return data as DemoBanner
+}
+
+export async function updateDemoBanner(id: string, banner: Partial<DemoBanner>): Promise<DemoBanner | null> {
+  const { data, error } = await supabase
+    .from('demo_banners')
+    .update(banner)
+    .eq('id', id)
+    .select()
+    .single()
+  
+  if (error) {
+    console.error('Erro ao atualizar banner demo:', error)
+    return null
+  }
+  return data as DemoBanner
+}
+
+export async function deleteDemoBanner(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('demo_banners')
+    .delete()
+    .eq('id', id)
+  
+  if (error) {
+    console.error('Erro ao deletar banner demo:', error)
+    return false
+  }
+  return true
+}
+
 // =====================================================
 // INICIALIZAÇÃO DE TEMA NOVO
 // =====================================================

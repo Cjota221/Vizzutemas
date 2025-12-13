@@ -18,7 +18,7 @@ import {
   getCssByPage,
   upsertCssByPage
 } from '@/lib/supabase/themes'
-import { getProducts, getDemoBanners } from '@/lib/supabase/store'
+import { getProducts, getDemoBanners, createDemoBanner, updateDemoBanner, deleteDemoBanner } from '@/lib/supabase/store'
 import type { Theme, ThemeWidget, ThemeBanner, ColorConfig, PageType, LayoutConfig, LayoutSection } from '@/lib/types'
 import type { DemoProduct, DemoBanner } from '@/lib/supabase/store'
 import { ProductsTab, BannersTab } from '@/components/admin'
@@ -113,6 +113,20 @@ export default function EditThemePage() {
   }
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>(defaultLayoutConfig)
   
+  // Logo da loja
+  const [logoUrl, setLogoUrl] = useState('')
+  const fileInputLogo = useRef<HTMLInputElement>(null)
+  
+  // Carrosséis customizados de produtos
+  const [customCarousels, setCustomCarousels] = useState<{id: string, name: string, category: string, enabled: boolean, order: number}[]>([])
+  const [showAddCarousel, setShowAddCarousel] = useState(false)
+  const [newCarouselName, setNewCarouselName] = useState('')
+  const [newCarouselCategory, setNewCarouselCategory] = useState('')
+  const [selectedCarouselProducts, setSelectedCarouselProducts] = useState<string[]>([]) // IDs dos produtos selecionados
+  
+  // Drag and drop
+  const [draggedItem, setDraggedItem] = useState<string | null>(null)
+  
   // CSS por página (alinhado com PageType: 'home' | 'product' | 'cart')
   const [cssByPage, setCssByPage] = useState<Record<PageType, string>>({
     home: '',
@@ -158,7 +172,13 @@ export default function EditThemePage() {
         setStatus(themeData.status || 'draft')
         setThumbnail(themeData.thumbnail_url || '')
         if (themeData.color_config) setColors({ ...defaultColors, ...themeData.color_config })
-        if (themeData.layout_config) setLayoutConfig({ ...defaultLayoutConfig, ...themeData.layout_config })
+        if (themeData.layout_config) {
+          setLayoutConfig({ ...defaultLayoutConfig, ...themeData.layout_config })
+          // Carregar logo se existir
+          if ((themeData.layout_config as any).logo_url) {
+            setLogoUrl((themeData.layout_config as any).logo_url)
+          }
+        }
         
         // Carregar CSS de cada página
         const cssPromises = pageTypes.map(async (page) => {
@@ -223,7 +243,8 @@ export default function EditThemePage() {
     if (!theme) return
     setSaving(true)
     try {
-      await updateTheme(theme.id, { layout_config: layoutConfig } as any)
+      const configToSave = { ...layoutConfig, logo_url: logoUrl }
+      await updateTheme(theme.id, { layout_config: configToSave } as any)
       showMessage('success', 'Layout salvo!')
     } catch (error) {
       showMessage('error', 'Erro ao salvar layout')
@@ -420,6 +441,46 @@ export default function EditThemePage() {
     }
   }
 
+  // DEMO BANNERS - Usados no Preview
+  async function handleAddDemoBanner() {
+    if (!theme || !newBanner.name || !newBanner.image_desktop) return
+    setSaving(true)
+    try {
+      const banner = await createDemoBanner({
+        theme_id: theme.id,
+        title: newBanner.name,
+        subtitle: '',
+        image_desktop: newBanner.image_desktop,
+        image_mobile: newBanner.image_mobile || newBanner.image_desktop,
+        button_text: 'Ver mais',
+        button_link: newBanner.link_url || '#',
+        position: demoBanners.length,
+        is_active: true
+      })
+      if (banner) {
+        setDemoBanners([...demoBanners, banner])
+        setNewBanner({ name: '', image_desktop: '', image_mobile: '', link_url: '' })
+        showMessage('success', 'Banner adicionado! Ele aparecerá no preview.')
+      }
+    } catch (error) {
+      console.error('Erro ao adicionar demo banner:', error)
+      showMessage('error', 'Erro ao adicionar banner')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDeleteDemoBanner(bannerId: string) {
+    if (!confirm('Excluir banner?')) return
+    try {
+      await deleteDemoBanner(bannerId)
+      setDemoBanners(demoBanners.filter(b => b.id !== bannerId))
+      showMessage('success', 'Banner excluído!')
+    } catch (error) {
+      showMessage('error', 'Erro ao excluir banner')
+    }
+  }
+
   if (loading) return (
     <AdminLayout title="Carregando...">
       <div className="flex items-center justify-center h-96">
@@ -511,28 +572,28 @@ export default function EditThemePage() {
       <div className="space-y-6">
         {activeTab === 'info' && (
           <Card>
-            <h2 className="text-lg font-semibold text-white mb-6 pb-4 border-b border-white/10">Informações do Tema</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-6 pb-4 border-b border-gray-200">Informações do Tema</h2>
             <div className="space-y-5 max-w-2xl">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Nome do Tema</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} className="input-modern w-full" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Tema</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Slug (URL)</label>
-                <input type="text" value={slug} onChange={e => setSlug(e.target.value)} className="input-modern w-full" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Slug (URL)</label>
+                <input type="text" value={slug} onChange={e => setSlug(e.target.value)} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Descrição</label>
-                <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="input-modern w-full" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Preço (R$)</label>
-                  <input type="number" value={price} onChange={e => setPrice(e.target.value)} step="0.01" min="0" className="input-modern w-full" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Preço (R$)</label>
+                  <input type="number" value={price} onChange={e => setPrice(e.target.value)} step="0.01" min="0" className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Status</label>
-                  <select value={status} onChange={e => setStatus(e.target.value as any)} className="input-modern w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select value={status} onChange={e => setStatus(e.target.value as any)} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="draft">Rascunho</option>
                     <option value="published">Publicado</option>
                     <option value="archived">Arquivado</option>
@@ -540,96 +601,333 @@ export default function EditThemePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">URL da Thumbnail</label>
-                <input type="url" value={thumbnail} onChange={e => setThumbnail(e.target.value)} placeholder="https://..." className="input-modern w-full" />
-                {thumbnail && <img src={thumbnail} alt="Preview" className="mt-2 h-24 rounded-lg object-cover border border-white/10" />}
+                <label className="block text-sm font-medium text-gray-700 mb-2">URL da Thumbnail</label>
+                <input type="url" value={thumbnail} onChange={e => setThumbnail(e.target.value)} placeholder="https://..." className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                {thumbnail && <img src={thumbnail} alt="Preview" className="mt-2 h-24 rounded-lg object-cover border border-gray-200" />}
               </div>
-              <button onClick={handleSaveInfo} disabled={saving} className="px-5 py-2.5 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition disabled:opacity-50">
+              <button onClick={handleSaveInfo} disabled={saving} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50">
                 {saving ? 'Salvando...' : 'Salvar Informações'}
               </button>
             </div>
           </Card>
         )}
 
-        {/* Layout Tab - Ordenação de Seções */}
+        {/* Layout Tab - Completamente Reformulado */}
         {activeTab === 'layout' && (
-          <Card>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-800">Layout da Página</h2>
-                  <p className="text-sm text-gray-500 mt-1">Arraste e organize as seções como preferir</p>
-                </div>
-                <button onClick={handleSaveLayout} disabled={saving} className="px-4 py-2 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white rounded-lg font-medium text-sm transition">
-                  {saving ? 'Salvando...' : 'Salvar Layout'}
-                </button>
-              </div>
-
-              {/* Ordenação de Seções */}
-              <div className="space-y-2 mb-8">
-                <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">Ordem das Seções</h3>
-                {layoutConfig.sections.sort((a, b) => a.order - b.order).map((section, index) => (
-                  <div 
-                    key={section.id} 
-                    className={`flex items-center gap-4 p-4 rounded-lg border-2 transition ${
-                      section.enabled 
-                        ? 'bg-white border-gray-200 hover:border-pink-300' 
-                        : 'bg-gray-50 border-gray-100 opacity-60'
-                    }`}
-                  >
-                    {/* Número da ordem */}
-                    <span className="w-8 h-8 flex items-center justify-center bg-pink-100 text-pink-600 font-bold rounded-lg text-sm">
-                      {index + 1}
-                    </span>
-                    
-                    {/* Nome da seção */}
-                    <div className="flex-1">
-                      <span className="font-medium text-gray-800">{section.label}</span>
-                      <span className="text-xs text-gray-400 ml-2">({section.type})</span>
-                    </div>
-                    
-                    {/* Toggle ativo/inativo */}
-                    <button 
-                      onClick={() => toggleSection(section.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                        section.enabled 
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                          : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
-                      }`}
-                    >
-                      {section.enabled ? '✓ Ativo' : 'Inativo'}
-                    </button>
-                    
-                    {/* Botões de mover */}
-                    <div className="flex gap-1">
-                      <button 
-                        onClick={() => moveSection(index, 'up')}
-                        disabled={index === 0}
-                        className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
-                        title="Mover para cima"
-                      >
-                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => moveSection(index, 'down')}
-                        disabled={index === layoutConfig.sections.length - 1}
-                        className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
-                        title="Mover para baixo"
-                      >
-                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
+          <div className="space-y-6">
+            {/* Logo da Loja */}
+            <Card>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">🏪 Logomarca da Loja</h2>
+                <p className="text-sm text-gray-500 mb-4">Faça upload ou cole a URL da logo que aparecerá no cabeçalho</p>
+                
+                <div className="flex items-start gap-6">
+                  <div className="flex-1">
+                    <input 
+                      type="url" 
+                      value={logoUrl} 
+                      onChange={e => setLogoUrl(e.target.value)} 
+                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-800" 
+                      placeholder="Cole a URL da logo aqui..." 
+                    />
+                    <div className="mt-2">
+                      <input type="file" ref={fileInputLogo} accept="image/*" onChange={async e => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          const url = await uploadImage(file, 'logos')
+                          if (url) setLogoUrl(url)
+                        }
+                      }} className="hidden" />
+                      <button onClick={() => fileInputLogo.current?.click()} disabled={uploading} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
+                        {uploading ? 'Enviando...' : '📤 Fazer upload'}
                       </button>
                     </div>
                   </div>
-                ))}
+                  {logoUrl && (
+                    <div className="relative">
+                      <img src={logoUrl} alt="Logo" className="h-20 w-auto object-contain border rounded-lg p-2 bg-gray-50" />
+                      <button onClick={() => setLogoUrl('')} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600">×</button>
+                    </div>
+                  )}
+                </div>
               </div>
+            </Card>
 
-              {/* Produtos por linha */}
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4">Grid de Produtos</h3>
+            {/* Seções do Layout */}
+            <Card>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">📐 Seções da Página</h2>
+                    <p className="text-sm text-gray-500 mt-1">Arraste para reordenar • Clique para ativar/desativar</p>
+                  </div>
+                  <button onClick={handleSaveLayout} disabled={saving} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm transition">
+                    {saving ? 'Salvando...' : '💾 Salvar Layout'}
+                  </button>
+                </div>
+
+                {/* Lista de seções com drag-and-drop */}
+                <div className="space-y-2 mb-6">
+                  {layoutConfig.sections.sort((a, b) => a.order - b.order).map((section, index) => (
+                    <div 
+                      key={section.id}
+                      draggable
+                      onDragStart={() => setDraggedItem(section.id)}
+                      onDragEnd={() => setDraggedItem(null)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => {
+                        if (draggedItem && draggedItem !== section.id) {
+                          const newSections = [...layoutConfig.sections]
+                          const draggedIndex = newSections.findIndex(s => s.id === draggedItem)
+                          const dropIndex = index
+                          const [removed] = newSections.splice(draggedIndex, 1)
+                          newSections.splice(dropIndex, 0, removed)
+                          newSections.forEach((s, i) => s.order = i + 1)
+                          setLayoutConfig({ ...layoutConfig, sections: newSections })
+                        }
+                      }}
+                      className={`flex items-center gap-4 p-4 rounded-lg border-2 transition cursor-grab active:cursor-grabbing ${
+                        draggedItem === section.id ? 'opacity-50 border-blue-400 bg-blue-50' :
+                        section.enabled 
+                          ? 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm' 
+                          : 'bg-gray-50 border-gray-100 opacity-60'
+                      }`}
+                    >
+                      {/* Handle de arrastar */}
+                      <div className="text-gray-400 cursor-grab">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
+                        </svg>
+                      </div>
+                      
+                      {/* Número da ordem */}
+                      <span className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 font-bold rounded-lg text-sm">
+                        {index + 1}
+                      </span>
+                      
+                      {/* Ícone do tipo */}
+                      <span className="text-2xl">
+                        {section.type === 'banner_principal' ? '🖼️' :
+                         section.type === 'banner_categorias' ? '📂' :
+                         section.type === 'produtos' ? '🛍️' :
+                         section.type === 'widgets' ? '🧩' :
+                         section.type === 'avaliacoes' ? '⭐' :
+                         section.type === 'carousel_custom' ? '🎠' :
+                         '📋'}
+                      </span>
+                      
+                      {/* Nome da seção */}
+                      <div className="flex-1">
+                        <span className="font-medium text-gray-800">{section.label}</span>
+                        {section.type === 'carousel_custom' && (section as any).product_ids && (
+                          <span className="text-xs text-purple-600 ml-2 px-2 py-0.5 bg-purple-50 rounded">
+                            {(section as any).product_ids.length} produto(s)
+                          </span>
+                        )}
+                        {section.type === 'carousel_custom' && (section as any).category && !(section as any).product_ids && (
+                          <span className="text-xs text-blue-600 ml-2 px-2 py-0.5 bg-blue-50 rounded">
+                            Categoria: {(section as any).category}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Toggle ativo/inativo */}
+                      <button 
+                        onClick={() => toggleSection(section.id)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                          section.enabled 
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                            : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                        }`}
+                      >
+                        {section.enabled ? '✓ Ativo' : 'Inativo'}
+                      </button>
+                      
+                      {/* Botão deletar (só para carrosséis customizados) */}
+                      {section.type === 'carousel_custom' && (
+                        <button 
+                          onClick={() => {
+                            const newSections = layoutConfig.sections.filter(s => s.id !== section.id)
+                            newSections.forEach((s, i) => s.order = i + 1)
+                            setLayoutConfig({ ...layoutConfig, sections: newSections })
+                          }}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Botão Adicionar Seção */}
+                <div className="border-t border-gray-200 pt-6">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-4">➕ Adicionar Nova Seção</h3>
+                  
+                  {!showAddCarousel ? (
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={() => setShowAddCarousel(true)}
+                        className="px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-lg font-medium text-sm transition flex items-center gap-2"
+                      >
+                        🎠 Carrossel de Produtos
+                      </button>
+                      <button
+                        onClick={() => {
+                          const newSection = {
+                            id: `widget_${Date.now()}`,
+                            type: 'widgets' as const,
+                            label: 'Widget Personalizado',
+                            enabled: true,
+                            order: layoutConfig.sections.length + 1
+                          }
+                          setLayoutConfig({ ...layoutConfig, sections: [...layoutConfig.sections, newSection] })
+                        }}
+                        className="px-4 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium text-sm transition flex items-center gap-2"
+                      >
+                        🧩 Widget HTML
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-medium text-blue-800 mb-3">🎠 Criar Carrossel de Produtos</h4>
+                      
+                      {/* Nome do carrossel */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Carrossel</label>
+                        <input 
+                          type="text" 
+                          value={newCarouselName}
+                          onChange={e => setNewCarouselName(e.target.value)}
+                          className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-800" 
+                          placeholder="Ex: Lançamentos, Promoções, Mais Vendidos..."
+                        />
+                      </div>
+
+                      {/* Lista de produtos para seleção */}
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Selecione os Produtos ({selectedCarouselProducts.length} selecionados)
+                        </label>
+                        
+                        {products.length === 0 ? (
+                          <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 text-yellow-800">
+                            <p>⚠️ Nenhum produto cadastrado. Cadastre produtos primeiro na aba &quot;Produtos&quot;.</p>
+                          </div>
+                        ) : (
+                          <div className="max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-lg">
+                            {products.map(product => (
+                              <label 
+                                key={product.id} 
+                                className={`flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                                  selectedCarouselProducts.includes(product.id) ? 'bg-blue-50' : ''
+                                }`}
+                              >
+                                <input 
+                                  type="checkbox"
+                                  checked={selectedCarouselProducts.includes(product.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedCarouselProducts([...selectedCarouselProducts, product.id])
+                                    } else {
+                                      setSelectedCarouselProducts(selectedCarouselProducts.filter(id => id !== product.id))
+                                    }
+                                  }}
+                                  className="w-5 h-5 text-blue-600 rounded"
+                                />
+                                {product.image_url && (
+                                  <img 
+                                    src={product.image_url} 
+                                    alt={product.name}
+                                    className="w-12 h-12 object-cover rounded-lg"
+                                  />
+                                )}
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-800">{product.name}</p>
+                                  <p className="text-sm text-gray-500">
+                                    R$ {product.price?.toFixed(2)} {product.category && `• ${product.category}`}
+                                  </p>
+                                </div>
+                                {product.badge && (
+                                  <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                                    {product.badge}
+                                  </span>
+                                )}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Botões de seleção rápida */}
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCarouselProducts(products.map(p => p.id))}
+                            className="px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded-lg"
+                          >
+                            Selecionar Todos
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCarouselProducts([])}
+                            className="px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded-lg"
+                          >
+                            Limpar Seleção
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Botões de ação */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            if (newCarouselName && selectedCarouselProducts.length > 0) {
+                              const newSection = {
+                                id: `carousel_${Date.now()}`,
+                                type: 'carousel_custom' as const,
+                                label: newCarouselName,
+                                product_ids: selectedCarouselProducts,
+                                enabled: true,
+                                order: layoutConfig.sections.length + 1
+                              }
+                              setLayoutConfig({ 
+                                ...layoutConfig, 
+                                sections: [...layoutConfig.sections, newSection as any] 
+                              })
+                              setNewCarouselName('')
+                              setSelectedCarouselProducts([])
+                              setShowAddCarousel(false)
+                              showMessage('success', `Carrossel "${newCarouselName}" criado com ${selectedCarouselProducts.length} produtos!`)
+                            }
+                          }}
+                          disabled={!newCarouselName || selectedCarouselProducts.length === 0}
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm"
+                        >
+                          Criar Carrossel ({selectedCarouselProducts.length} produtos)
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowAddCarousel(false)
+                            setNewCarouselName('')
+                            setSelectedCarouselProducts([])
+                          }}
+                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+
+            {/* Grid de Produtos */}
+            <Card>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">🏗️ Grid de Produtos</h3>
                 <div className="flex items-center gap-4">
                   <label className="text-sm font-medium text-gray-700">Produtos por linha (Desktop):</label>
                   <div className="flex gap-2">
@@ -639,7 +937,7 @@ export default function EditThemePage() {
                         onClick={() => setLayoutConfig({ ...layoutConfig, products_per_row: num })}
                         className={`w-12 h-12 rounded-lg font-bold text-lg transition ${
                           layoutConfig.products_per_row === num
-                            ? 'bg-pink-500 text-white'
+                            ? 'bg-blue-600 text-white shadow-md'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
@@ -651,35 +949,55 @@ export default function EditThemePage() {
                 </div>
                 <p className="text-xs text-gray-400 mt-2">No mobile serão 2 produtos por linha automaticamente</p>
               </div>
-            </div>
+            </Card>
 
-            {/* Preview visual do layout */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4">Preview do Layout</h3>
-              <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 space-y-2">
-                {layoutConfig.sections
-                  .filter(s => s.enabled)
-                  .sort((a, b) => a.order - b.order)
-                  .map(section => (
-                    <div 
-                      key={section.id}
-                      className={`p-3 rounded text-center text-sm font-medium ${
-                        section.type === 'banner_principal' ? 'bg-pink-100 text-pink-700 h-16' :
-                        section.type === 'banner_categorias' ? 'bg-purple-100 text-purple-700 h-10' :
-                        section.type === 'produtos' ? 'bg-blue-100 text-blue-700 h-24' :
-                        section.type === 'widgets' ? 'bg-yellow-100 text-yellow-700 h-12' :
-                        section.type === 'avaliacoes' ? 'bg-green-100 text-green-700 h-12' :
-                        'bg-gray-100 text-gray-700 h-10'
-                      } flex items-center justify-center`}
-                    >
-                      {section.label}
-                      {section.type === 'produtos' && ` (${layoutConfig.products_per_row} por linha)`}
-                    </div>
-                  ))
-                }
+            {/* Preview Visual */}
+            <Card>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">👁️ Preview do Layout</h3>
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 space-y-2 bg-gray-50">
+                  {/* Header com logo */}
+                  <div className="p-3 bg-white rounded text-center border-b-2 border-gray-200 flex items-center justify-center gap-4">
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="Logo" className="h-8 w-auto" />
+                    ) : (
+                      <span className="text-gray-400 text-sm">[ Logo ]</span>
+                    )}
+                    <span className="text-gray-400 text-xs">| Menu | Busca | Carrinho</span>
+                  </div>
+                  
+                  {/* Seções */}
+                  {layoutConfig.sections
+                    .filter(s => s.enabled)
+                    .sort((a, b) => a.order - b.order)
+                    .map(section => (
+                      <div 
+                        key={section.id}
+                        className={`p-3 rounded text-center text-sm font-medium ${
+                          section.type === 'banner_principal' ? 'bg-pink-100 text-pink-700 h-16' :
+                          section.type === 'banner_categorias' ? 'bg-purple-100 text-purple-700 h-10' :
+                          section.type === 'produtos' ? 'bg-blue-100 text-blue-700 h-24' :
+                          section.type === 'widgets' ? 'bg-yellow-100 text-yellow-700 h-12' :
+                          section.type === 'avaliacoes' ? 'bg-green-100 text-green-700 h-12' :
+                          section.type === 'carousel_custom' ? 'bg-indigo-100 text-indigo-700 h-20' :
+                          'bg-gray-100 text-gray-700 h-10'
+                        } flex items-center justify-center`}
+                      >
+                        {section.label}
+                        {section.type === 'produtos' && ` (${layoutConfig.products_per_row}/linha)`}
+                        {section.type === 'carousel_custom' && section.category && ` [${section.category}]`}
+                      </div>
+                    ))
+                  }
+                  
+                  {/* Rodapé */}
+                  <div className="p-2 bg-gray-800 rounded text-center text-white text-xs">
+                    Rodapé
+                  </div>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         )}
 
         {activeTab === 'cores' && (
@@ -774,86 +1092,108 @@ export default function EditThemePage() {
 
         {activeTab === 'banners' && (
           <Card>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">Adicionar Banner</h2>
+              <p className="text-sm text-gray-500 mb-4">Banners são exibidos na home do preview. O primeiro banner é o principal.</p>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-                  <input type="text" value={newBanner.name} onChange={e => setNewBanner({ ...newBanner, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg" placeholder="Nome do banner" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+                  <input type="text" value={newBanner.name} onChange={e => setNewBanner({ ...newBanner, name: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800" placeholder="Ex: Promoção de Verão" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Link (opcional)</label>
-                  <input type="url" value={newBanner.link_url} onChange={e => setNewBanner({ ...newBanner, link_url: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg" placeholder="https://..." />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Link do Botão (opcional)</label>
+                  <input type="url" value={newBanner.link_url} onChange={e => setNewBanner({ ...newBanner, link_url: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800" placeholder="https://..." />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Imagem Desktop (1920x600)</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-pink-400 transition">
-                    {newBanner.image_desktop ? (
-                      <div className="relative">
-                        <img src={newBanner.image_desktop} alt="Desktop" className="w-full h-32 object-cover rounded" />
-                        <button onClick={() => setNewBanner({ ...newBanner, image_desktop: '' })} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">×</button>
-                      </div>
-                    ) : (
-                      <div>
-                        <input type="file" ref={fileInputDesktop} accept="image/*" onChange={e => handleBannerImageUpload(e, 'desktop')} className="hidden" />
-                        <button onClick={() => fileInputDesktop.current?.click()} disabled={uploading} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
-                          {uploading ? 'Enviando...' : '📤 Escolher imagem'}
-                        </button>
-                        <p className="text-xs text-gray-500 mt-2">PNG, JPG até 5MB</p>
-                      </div>
-                    )}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Imagem Desktop * (1920x600)</label>
+                  <input 
+                    type="url" 
+                    value={newBanner.image_desktop} 
+                    onChange={e => setNewBanner({ ...newBanner, image_desktop: e.target.value })} 
+                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800 mb-2" 
+                    placeholder="Cole a URL da imagem aqui..." 
+                  />
+                  {newBanner.image_desktop && (
+                    <div className="relative">
+                      <img src={newBanner.image_desktop} alt="Desktop" className="w-full h-32 object-cover rounded border" />
+                      <button onClick={() => setNewBanner({ ...newBanner, image_desktop: '' })} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600">×</button>
+                    </div>
+                  )}
+                  <div className="mt-2 text-center">
+                    <input type="file" ref={fileInputDesktop} accept="image/*" onChange={e => handleBannerImageUpload(e, 'desktop')} className="hidden" />
+                    <button onClick={() => fileInputDesktop.current?.click()} disabled={uploading} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
+                      {uploading ? 'Enviando...' : '📤 Ou fazer upload'}
+                    </button>
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Imagem Mobile (768x400)</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-pink-400 transition">
-                    {newBanner.image_mobile ? (
-                      <div className="relative">
-                        <img src={newBanner.image_mobile} alt="Mobile" className="w-full h-32 object-cover rounded" />
-                        <button onClick={() => setNewBanner({ ...newBanner, image_mobile: '' })} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">×</button>
-                      </div>
-                    ) : (
-                      <div>
-                        <input type="file" ref={fileInputMobile} accept="image/*" onChange={e => handleBannerImageUpload(e, 'mobile')} className="hidden" />
-                        <button onClick={() => fileInputMobile.current?.click()} disabled={uploading} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
-                          {uploading ? 'Enviando...' : '📤 Escolher imagem'}
-                        </button>
-                        <p className="text-xs text-gray-500 mt-2">PNG, JPG até 5MB</p>
-                      </div>
-                    )}
+                  <input 
+                    type="url" 
+                    value={newBanner.image_mobile} 
+                    onChange={e => setNewBanner({ ...newBanner, image_mobile: e.target.value })} 
+                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800 mb-2" 
+                    placeholder="Cole a URL (opcional, usa desktop se vazio)" 
+                  />
+                  {newBanner.image_mobile && (
+                    <div className="relative">
+                      <img src={newBanner.image_mobile} alt="Mobile" className="w-full h-32 object-cover rounded border" />
+                      <button onClick={() => setNewBanner({ ...newBanner, image_mobile: '' })} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600">×</button>
+                    </div>
+                  )}
+                  <div className="mt-2 text-center">
+                    <input type="file" ref={fileInputMobile} accept="image/*" onChange={e => handleBannerImageUpload(e, 'mobile')} className="hidden" />
+                    <button onClick={() => fileInputMobile.current?.click()} disabled={uploading} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">
+                      {uploading ? 'Enviando...' : '📤 Ou fazer upload'}
+                    </button>
                   </div>
                 </div>
               </div>
 
-              <button onClick={handleAddBanner} disabled={saving || !newBanner.name || !newBanner.image_desktop} className="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white rounded-lg font-medium transition">
-                Adicionar Banner
-              </button>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={handleAddDemoBanner} 
+                  disabled={saving || !newBanner.name || !newBanner.image_desktop} 
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition"
+                >
+                  {saving ? 'Salvando...' : 'Adicionar Banner'}
+                </button>
+                {(!newBanner.name || !newBanner.image_desktop) && (
+                  <span className="text-sm text-amber-600">* Preencha o título e a URL da imagem desktop</span>
+                )}
+              </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Banners Cadastrados</h2>
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">Banners Cadastrados ({demoBanners.length})</h2>
               <div className="space-y-3">
-                {banners.map((banner, index) => (
+                {demoBanners.map((banner, index) => (
                   <div key={banner.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <span className="text-gray-400 font-mono text-sm">{index + 1}</span>
-                    <img src={banner.image_desktop} alt={banner.name} className="h-16 w-28 object-cover rounded border" />
+                    <span className="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 font-bold rounded-lg text-sm">{index + 1}</span>
+                    <img src={banner.image_desktop} alt={banner.title || 'Banner'} className="h-16 w-28 object-cover rounded border" />
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{banner.name}</h4>
-                      <p className="text-sm text-gray-500">{banner.link_url || 'Sem link'}</p>
+                      <h4 className="font-medium text-gray-800">{banner.title || 'Sem título'}</h4>
+                      <p className="text-sm text-gray-500">{banner.button_link || 'Sem link'}</p>
                     </div>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${banner.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                       {banner.is_active ? 'Ativo' : 'Inativo'}
                     </span>
                     <div className="flex gap-2">
-                      <button onClick={() => setEditingBanner(banner)} className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded text-sm">Editar</button>
-                      <button onClick={() => handleDeleteBanner(banner.id)} className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm">Excluir</button>
+                      <button onClick={() => handleDeleteDemoBanner(banner.id)} className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-sm">Excluir</button>
                     </div>
                   </div>
                 ))}
-                {banners.length === 0 && <div className="text-center text-slate-400 py-8">Nenhum banner cadastrado</div>}
+                {demoBanners.length === 0 && (
+                  <div className="text-center text-gray-400 py-8">
+                    <div className="text-4xl mb-2">🖼️</div>
+                    <p>Nenhum banner cadastrado</p>
+                    <p className="text-sm mt-1">Adicione banners para aparecerem no preview</p>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
@@ -872,6 +1212,48 @@ export default function EditThemePage() {
         {/* Widgets Tab */}
         {activeTab === 'widgets' && (
           <Card>
+            {/* Guia de Variáveis CSS */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200 p-6 mb-6">
+              <h3 className="text-lg font-semibold text-blue-800 mb-3">🎨 Variáveis CSS da Paleta de Cores</h3>
+              <p className="text-sm text-blue-700 mb-4">
+                Use estas variáveis CSS nos seus widgets para adaptar automaticamente às cores do tema:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="bg-white rounded-lg p-3 border border-blue-100">
+                  <code className="text-xs text-purple-600 font-mono">var(--cor-primaria)</code>
+                  <p className="text-xs text-gray-500 mt-1">Cor principal/destaque</p>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-blue-100">
+                  <code className="text-xs text-purple-600 font-mono">var(--cor-secundaria)</code>
+                  <p className="text-xs text-gray-500 mt-1">Cor secundária</p>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-blue-100">
+                  <code className="text-xs text-purple-600 font-mono">var(--cor-destaque)</code>
+                  <p className="text-xs text-gray-500 mt-1">Botão principal</p>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-blue-100">
+                  <code className="text-xs text-purple-600 font-mono">var(--cor-fundo)</code>
+                  <p className="text-xs text-gray-500 mt-1">Fundo da página</p>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-blue-100">
+                  <code className="text-xs text-purple-600 font-mono">var(--cor-detalhes-fundo)</code>
+                  <p className="text-xs text-gray-500 mt-1">Fundos secundários</p>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-blue-100">
+                  <code className="text-xs text-purple-600 font-mono">var(--cor-fundo-rodape)</code>
+                  <p className="text-xs text-gray-500 mt-1">Cor do rodapé</p>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-gray-900 rounded-lg">
+                <p className="text-xs text-gray-400 mb-2">Exemplo de uso:</p>
+                <code className="text-xs text-green-400 font-mono">
+                  {`<div style="background: var(--cor-primaria); color: white; padding: 20px;">`}<br/>
+                  {`  Meu widget com a cor do tema!`}<br/>
+                  {`</div>`}
+                </code>
+              </div>
+            </div>
+
             {/* Adicionar novo widget */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">Adicionar Widget HTML</h2>
@@ -886,8 +1268,8 @@ export default function EditThemePage() {
                       type="text" 
                       value={newWidget.name} 
                       onChange={e => setNewWidget({ ...newWidget, name: e.target.value })} 
-                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg" 
-                      placeholder="Ex: Chat WhatsApp, Analytics, etc."
+                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-800" 
+                      placeholder="Ex: Banner Promocional, Chat WhatsApp, etc."
                     />
                   </div>
                   <div>
@@ -895,7 +1277,7 @@ export default function EditThemePage() {
                     <select 
                       value={newWidget.widget_type} 
                       onChange={e => setNewWidget({ ...newWidget, widget_type: e.target.value as 'html' })} 
-                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg"
+                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-800"
                     >
                       <option value="html">HTML Personalizado</option>
                     </select>
@@ -906,15 +1288,15 @@ export default function EditThemePage() {
                   <textarea 
                     value={newWidget.html_content} 
                     onChange={e => setNewWidget({ ...newWidget, html_content: e.target.value })} 
-                    rows={8} 
+                    rows={10} 
                     className="w-full px-4 py-3 bg-gray-900 text-green-400 border border-gray-300 rounded-lg font-mono text-sm" 
-                    placeholder="<style>&#10;  /* Seu CSS aqui */&#10;</style>&#10;&#10;<div>&#10;  <!-- Seu HTML aqui -->&#10;</div>&#10;&#10;<script>&#10;  // Seu JavaScript aqui&#10;</script>"
+                    placeholder={`<!-- Use var(--cor-primaria) para cores do tema -->\n<style>\n  .meu-widget {\n    background: var(--cor-primaria);\n    padding: 20px;\n    text-align: center;\n  }\n</style>\n\n<div class="meu-widget">\n  <h2>Meu Widget</h2>\n</div>`}
                   />
                 </div>
                 <button 
                   onClick={handleAddWidget} 
                   disabled={saving || !newWidget.name || !newWidget.html_content} 
-                  className="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white rounded-lg font-medium transition"
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium transition"
                 >
                   Adicionar Widget
                 </button>

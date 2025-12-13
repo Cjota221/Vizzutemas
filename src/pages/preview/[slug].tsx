@@ -1,13 +1,13 @@
 import { GetServerSideProps } from 'next'
 import Link from 'next/link'
 import Head from 'next/head'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { getThemeBySlug, generateBaseCss, getActiveWidgetsByTheme } from '@/lib/supabase/themes'
 import { getProducts, getDemoBanners, getStoreConfig } from '@/lib/supabase/store'
 import { ColorConfig, ThemeWidget, LayoutConfig } from '@/lib/types'
 import type { DemoProduct, DemoBanner, StoreConfig } from '@/lib/supabase/store'
 
-// Componente de Carrossel de Produtos
+// Componente de Carrossel de Produtos (Infinito)
 function ProductCarousel({ 
   title, 
   products, 
@@ -22,12 +22,44 @@ function ProductCarousel({
   btnText: string
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+
+  // Duplicar produtos para efeito infinito
+  const displayProducts = products.length > 0 ? [...products, ...products, ...products] : []
+
+  useEffect(() => {
+    // Iniciar no meio para poder scrollar para ambos os lados
+    if (scrollRef.current && products.length > 0) {
+      const scrollWidth = scrollRef.current.scrollWidth
+      scrollRef.current.scrollLeft = scrollWidth / 3
+    }
+  }, [products])
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+      const oneThird = scrollWidth / 3
+
+      // Se chegou no início, pula pro meio
+      if (scrollLeft < 50) {
+        scrollRef.current.scrollLeft = oneThird + scrollLeft
+      }
+      // Se chegou no fim, pula pro meio
+      if (scrollLeft > oneThird * 2 - 50) {
+        scrollRef.current.scrollLeft = oneThird + (scrollLeft - oneThird * 2)
+      }
+
+      setCanScrollLeft(scrollLeft > 10)
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+    }
+  }
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
-      const scrollAmount = 220 // largura de cada card + gap
+      const scrollAmount = 200
       scrollRef.current.scrollBy({ 
-        left: direction === 'left' ? -scrollAmount * 3 : scrollAmount * 3, 
+        left: direction === 'left' ? -scrollAmount : scrollAmount, 
         behavior: 'smooth' 
       })
     }
@@ -36,7 +68,7 @@ function ProductCarousel({
   if (products.length === 0) return null
 
   return (
-    <div className="mb-8">
+    <div className="mb-6">
       {/* Título da Faixa */}
       <div className="flex items-center justify-between px-4 mb-3">
         <h2 className="text-lg font-bold" style={{ color: colors.cor_detalhes_gerais }}>
@@ -45,33 +77,36 @@ function ProductCarousel({
         <div className="flex gap-2">
           <button 
             onClick={() => scroll('left')}
-            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
+            className="w-8 h-8 rounded-full flex items-center justify-center transition"
+            style={{ backgroundColor: colors.cor_detalhes_fundo }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke={colors.cor_detalhes_gerais} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <button 
             onClick={() => scroll('right')}
-            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
+            className="w-8 h-8 rounded-full flex items-center justify-center transition"
+            style={{ backgroundColor: colors.cor_detalhes_fundo }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke={colors.cor_detalhes_gerais} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
       </div>
 
-      {/* Carrossel */}
+      {/* Carrossel Infinito */}
       <div 
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto scrollbar-hide px-4 pb-2 snap-x snap-mandatory"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        onScroll={handleScroll}
+        className="flex gap-3 overflow-x-auto px-4 pb-2"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       >
-        {products.map(product => (
+        {displayProducts.map((product, index) => (
           <div 
-            key={product.id} 
-            className="flex-shrink-0 w-[160px] bg-white rounded-xl shadow-sm overflow-hidden border hover:shadow-md transition-shadow snap-start"
+            key={`${product.id}-${index}`} 
+            className="flex-shrink-0 w-[150px] bg-white rounded-xl shadow-sm overflow-hidden border hover:shadow-md transition-shadow"
           >
             <div className="aspect-square bg-gray-100 relative">
               <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
@@ -94,7 +129,7 @@ function ProductCarousel({
               </p>
               <button 
                 onClick={onAddCart} 
-                className="w-full mt-2 py-1.5 text-white text-xs font-medium rounded-lg transition"
+                className="w-full mt-2 py-1.5 text-white text-xs font-medium rounded-lg transition hover:opacity-90"
                 style={{ backgroundColor: colors.cor_botao_enviar_pedido }}
               >
                 {btnText}
@@ -153,13 +188,38 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
   const [searchQuery, setSearchQuery] = useState('')
 
   const isMobile = viewMode === 'mobile'
-  const logoUrl = storeConfig?.store_logo || null
+  // Prioridade: layoutConfig.logo_url > storeConfig.store_logo
+  const logoUrl = (layoutConfig as any)?.logo_url || storeConfig?.store_logo || null
+
+  // CSS com variáveis de cores para widgets
+  const colorVariablesCss = `
+    :root {
+      --cor-fundo-pagina: ${colors.cor_fundo_pagina};
+      --cor-detalhes-fundo: ${colors.cor_detalhes_fundo};
+      --cor-fundo-barra-superior: ${colors.cor_fundo_barra_superior};
+      --cor-botoes-cabecalho: ${colors.cor_botoes_cabecalho};
+      --cor-fundo-cabecalho: ${colors.cor_fundo_cabecalho};
+      --cor-botao-enviar-pedido: ${colors.cor_botao_enviar_pedido};
+      --cor-demais-botoes: ${colors.cor_demais_botoes};
+      --cor-detalhes-gerais: ${colors.cor_detalhes_gerais};
+      --cor-fundo-banner-catalogo: ${colors.cor_fundo_banner_catalogo};
+      --cor-fundo-menu-desktop: ${colors.cor_fundo_menu_desktop};
+      --cor-fundo-submenu-desktop: ${colors.cor_fundo_submenu_desktop};
+      --cor-fundo-menu-mobile: ${colors.cor_fundo_menu_mobile};
+      --cor-fundo-rodape: ${colors.cor_fundo_rodape};
+      /* Aliases simplificados */
+      --cor-primaria: ${colors.cor_detalhes_gerais};
+      --cor-secundaria: ${colors.cor_demais_botoes};
+      --cor-destaque: ${colors.cor_botao_enviar_pedido};
+      --cor-fundo: ${colors.cor_fundo_pagina};
+    }
+  `
 
   return (
     <>
       <Head>
-        <title>Preview - {theme.name}</title>
-        <style dangerouslySetInnerHTML={{ __html: injectedCss }} />
+        <title>{`Preview - ${theme.name}`}</title>
+        <style dangerouslySetInnerHTML={{ __html: colorVariablesCss + injectedCss }} />
       </Head>
 
       {/* Barra Admin */}
@@ -222,16 +282,24 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                 <span className="w-5 h-0.5 rounded" style={{ backgroundColor: colors.cor_botoes_cabecalho }}></span>
               </button>
 
-              {/* Logo Centralizada */}
+              {/* Logo Centralizada - Adaptável (horizontal ou circular) */}
               <div className="flex-1 flex justify-center">
                 {logoUrl ? (
-                  <img src={logoUrl} alt="Logo" className="h-12 object-contain" />
+                  <img 
+                    src={logoUrl} 
+                    alt="Logo" 
+                    className="max-h-14 max-w-[180px] object-contain" 
+                    style={{ 
+                      // Se a imagem for quadrada, fica redonda. Se for horizontal, fica normal.
+                      borderRadius: '4px'
+                    }}
+                  />
                 ) : (
                   <div 
-                    className="w-14 h-14 rounded-full border-2 flex items-center justify-center"
+                    className="h-12 px-4 rounded-lg border-2 flex items-center justify-center"
                     style={{ borderColor: colors.cor_botoes_cabecalho }}
                   >
-                    <span className="text-xs font-bold" style={{ color: colors.cor_botoes_cabecalho }}>LOGO</span>
+                    <span className="text-sm font-bold" style={{ color: colors.cor_botoes_cabecalho }}>SUA LOGO</span>
                   </div>
                 )}
               </div>
@@ -296,6 +364,7 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
           )}
 
           {/* ===== RENDERIZAÇÃO DAS SEÇÕES BASEADO NO LAYOUT CONFIG ===== */}
+          
           {layoutConfig.sections
             .filter(s => s.enabled)
             .sort((a, b) => a.order - b.order)
@@ -335,7 +404,31 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
 
                 {/* Widgets */}
                 {section.type === 'widgets' && widgets.length > 0 && (
-                  <div className="widgets-section">
+                  <div 
+                    className="widgets-section"
+                    style={{
+                      // Variáveis CSS disponíveis para os widgets
+                      '--cor-fundo-pagina': colors.cor_fundo_pagina,
+                      '--cor-detalhes-fundo': colors.cor_detalhes_fundo,
+                      '--cor-fundo-barra-superior': colors.cor_fundo_barra_superior,
+                      '--cor-botoes-cabecalho': colors.cor_botoes_cabecalho,
+                      '--cor-fundo-cabecalho': colors.cor_fundo_cabecalho,
+                      '--cor-botao-enviar-pedido': colors.cor_botao_enviar_pedido,
+                      '--cor-demais-botoes': colors.cor_demais_botoes,
+                      '--cor-detalhes-gerais': colors.cor_detalhes_gerais,
+                      '--cor-fundo-banner-catalogo': colors.cor_fundo_banner_catalogo,
+                      '--cor-fundo-menu-desktop': colors.cor_fundo_menu_desktop,
+                      '--cor-fundo-submenu-desktop': colors.cor_fundo_submenu_desktop,
+                      '--cor-fundo-menu-mobile': colors.cor_fundo_menu_mobile,
+                      '--cor-fundo-rodape': colors.cor_fundo_rodape,
+                      // Aliases mais simples
+                      '--cor-primaria': colors.cor_detalhes_gerais,
+                      '--cor-secundaria': colors.cor_demais_botoes,
+                      '--cor-destaque': colors.cor_botao_enviar_pedido,
+                      '--cor-fundo': colors.cor_fundo_pagina,
+                      '--cor-texto': '#333333',
+                    } as React.CSSProperties}
+                  >
                     {widgets.filter(w => w.is_active).sort((a, b) => a.display_order - b.display_order).map(widget => (
                       <div 
                         key={widget.id}
@@ -402,14 +495,13 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                           />
                         )}
 
-                        {/* Faixa: Todos os Produtos */}
-                        <ProductCarousel 
-                          title="🛍️ Todos os Produtos" 
-                          products={products.filter(p => p.is_active)}
-                          colors={colors}
-                          onAddCart={() => setCartCount(c => c + 1)}
-                          btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
-                        />
+                        {/* Se não houver nenhum carrossel por badge, mostra todos */}
+                        {products.filter(p => p.is_active && p.badge).length === 0 && (
+                          <div className="text-center py-8 px-4">
+                            <p className="text-gray-500 text-sm mb-2">Nenhum carrossel configurado.</p>
+                            <p className="text-gray-400 text-xs">Adicione carrosséis na aba Layout do admin.</p>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -444,6 +536,45 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <p className="text-sm text-gray-600">{storeConfig?.footer_about || 'Sua loja de confiança para as melhores ofertas.'}</p>
                     </div>
+                  </div>
+                )}
+
+                {/* Carrossel Customizado */}
+                {section.type === 'carousel_custom' && (
+                  <div className="carousel-custom-section py-4">
+                    <ProductCarousel 
+                      title={section.label}
+                      products={(() => {
+                        const sectionData = section as any
+                        
+                        // NOVA LÓGICA: Se tiver product_ids, filtra por IDs
+                        if (sectionData.product_ids && sectionData.product_ids.length > 0) {
+                          return products.filter(p => p.is_active && sectionData.product_ids.includes(p.id))
+                        }
+                        
+                        // LEGADO: Filtrar por categoria/badge (mantém retrocompatibilidade)
+                        if (sectionData.category) {
+                          return products.filter(p => {
+                            if (!p.is_active) return false
+                            const category = sectionData.category
+                            // Mapear categorias especiais para badges
+                            if (category === 'lancamentos') return p.badge === 'novo'
+                            if (category === 'promocoes') return p.badge === 'promocao'
+                            if (category === 'destaques') return p.badge === 'destaque'
+                            if (category === 'mais_vendidos') return p.badge === 'mais_vendido'
+                            if (category === 'ofertas') return p.original_price && p.original_price > p.price
+                            // Ou filtrar por categoria do produto
+                            return p.category === category
+                          })
+                        }
+                        
+                        // Se não tiver nenhum filtro, retorna vazio
+                        return []
+                      })()}
+                      colors={colors}
+                      onAddCart={() => setCartCount(c => c + 1)}
+                      btnText={storeConfig?.btn_buy_text || 'COMPRAR'}
+                    />
                   </div>
                 )}
               </div>

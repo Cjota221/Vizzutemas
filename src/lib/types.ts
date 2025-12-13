@@ -25,16 +25,18 @@ export type PageType = 'home' | 'product' | 'cart'
 // Seção do layout da página
 export type LayoutSection = {
   id: string
-  type: 'banner_principal' | 'banner_categorias' | 'produtos' | 'widgets' | 'avaliacoes' | 'info_loja'
+  type: 'banner_principal' | 'banner_categorias' | 'produtos' | 'widgets' | 'avaliacoes' | 'info_loja' | 'carousel_custom'
   label: string
   enabled: boolean
   order: number
+  category?: string  // Para carrosséis customizados
 }
 
 // Configuração de layout do tema
 export type LayoutConfig = {
   sections: LayoutSection[]
   products_per_row: number  // 4, 5 ou 6 produtos por linha
+  logo_url?: string  // URL da logomarca
 }
 
 // Tema - representa um tema disponível na plataforma
