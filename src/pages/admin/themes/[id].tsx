@@ -749,15 +749,19 @@ export default function EditThemePage() {
                         {section.enabled ? '✓ Ativo' : 'Inativo'}
                       </button>
                       
-                      {/* Botão deletar (só para carrosséis e widgets customizados) */}
-                      {(section.type === 'carousel_custom' || (section.type === 'widgets' && section.id.startsWith('widget_section_'))) && (
+                      {/* Botão deletar - permite excluir qualquer seção exceto as essenciais */}
+                      {!['banner_principal', 'produtos'].includes(section.id) && (
                         <button 
                           onClick={() => {
-                            const newSections = layoutConfig.sections.filter(s => s.id !== section.id)
-                            newSections.forEach((s, i) => s.order = i + 1)
-                            setLayoutConfig({ ...layoutConfig, sections: newSections })
+                            if (confirm(`Excluir a seção "${section.label}"?`)) {
+                              const newSections = layoutConfig.sections.filter(s => s.id !== section.id)
+                              newSections.forEach((s, i) => s.order = i + 1)
+                              setLayoutConfig({ ...layoutConfig, sections: newSections })
+                              showMessage('success', 'Seção excluída!')
+                            }
                           }}
                           className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                          title="Excluir seção"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

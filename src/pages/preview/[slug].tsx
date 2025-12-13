@@ -404,7 +404,7 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                 {/* Widgets */}
                 {section.type === 'widgets' && widgets.length > 0 && (
                   <div 
-                    className="widgets-section"
+                    className="widgets-section w-full overflow-hidden"
                     style={{
                       // Variáveis CSS disponíveis para os widgets
                       '--cor-fundo-pagina': colors.cor_fundo_pagina,
@@ -428,6 +428,34 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                       '--cor-texto': '#333333',
                     } as React.CSSProperties}
                   >
+                    {/* CSS base para responsividade dos widgets */}
+                    <style dangerouslySetInnerHTML={{ __html: `
+                      .widgets-section .widget {
+                        width: 100%;
+                        max-width: 100%;
+                        overflow-x: hidden;
+                        box-sizing: border-box;
+                      }
+                      .widgets-section .widget * {
+                        max-width: 100%;
+                        box-sizing: border-box;
+                      }
+                      .widgets-section .widget img {
+                        max-width: 100%;
+                        height: auto;
+                      }
+                      @media (max-width: 768px) {
+                        .widgets-section .widget {
+                          padding-left: 8px;
+                          padding-right: 8px;
+                        }
+                        .widgets-section .widget [style*="display: flex"],
+                        .widgets-section .widget [style*="display:flex"] {
+                          flex-wrap: wrap !important;
+                        }
+                      }
+                    `}} />
+                    
                     {/* Filtrar widgets: se tiver widget_ids, mostrar só os selecionados */}
                     {(() => {
                       const sectionData = section as any
