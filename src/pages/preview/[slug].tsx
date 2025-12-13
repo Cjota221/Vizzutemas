@@ -106,34 +106,77 @@ function ProductCarousel({
         {displayProducts.map((product, index) => (
           <div 
             key={`${product.id}-${index}`} 
-            className="flex-shrink-0 w-[150px] bg-white rounded-xl shadow-sm overflow-hidden border hover:shadow-md transition-shadow"
+            className="flex-shrink-0 w-[170px] bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100"
           >
+            {/* Imagem com bolinhas de paginação */}
             <div className="aspect-square bg-gray-100 relative">
               <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+              {/* Badge */}
               {product.badge && (
                 <span 
-                  className="absolute top-2 left-2 px-2 py-0.5 text-xs font-bold text-white rounded"
+                  className="absolute top-2 left-2 px-2 py-0.5 text-xs font-bold text-white rounded-full"
                   style={{ backgroundColor: colors.cor_detalhes_gerais }}
                 >
                   {product.badge === 'destaque' ? '⭐' : product.badge === 'novo' ? '🆕' : product.badge === 'promocao' ? '🔥' : '🏆'}
                 </span>
               )}
+              {/* Bolinhas de paginação (visual) */}
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.cor_detalhes_gerais }}></span>
+                <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+                <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+                <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+              </div>
             </div>
-            <div className="p-2">
-              <h3 className="text-xs font-medium text-gray-800 line-clamp-2 mb-1 h-8">{product.name}</h3>
+            
+            {/* Conteúdo */}
+            <div className="p-3 text-center">
+              {/* Nome do produto */}
+              <h3 className="text-sm font-medium text-gray-800 line-clamp-2 mb-2 min-h-[40px]">{product.name}</h3>
+              
+              {/* Preço */}
               {product.original_price && (
                 <p className="text-xs text-gray-400 line-through">R$ {product.original_price.toFixed(2)}</p>
               )}
-              <p className="text-sm font-bold" style={{ color: colors.cor_detalhes_gerais }}>
-                R$ {product.price.toFixed(2)}
+              <p className="text-xl font-bold text-gray-900 mb-2">
+                R$ {product.price.toFixed(2).replace('.', ',')}
               </p>
+              
+              {/* Botão Comprar */}
               <button 
                 onClick={onAddCart} 
-                className="w-full mt-2 py-1.5 text-white text-xs font-medium rounded-lg transition hover:opacity-90"
+                className="w-full py-2.5 text-white text-sm font-semibold rounded-xl transition hover:opacity-90 flex items-center justify-center gap-2"
                 style={{ backgroundColor: colors.cor_botao_enviar_pedido }}
               >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
                 {btnText}
               </button>
+              
+              {/* Parcelamento */}
+              <p className="text-xs text-gray-500 mt-2">
+                <span className="font-semibold">12x</span> de <span className="font-semibold">R$ {(product.price / 12).toFixed(2).replace('.', ',')}</span> no <span className="font-semibold">Cartão</span>
+              </p>
+              
+              {/* Ícones de ação */}
+              <div className="flex justify-center gap-6 mt-3 pt-3 border-t border-gray-100">
+                <button className="text-gray-400 hover:text-red-500 transition">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+                <button className="text-gray-400 hover:text-blue-500 transition">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+                <button className="text-gray-400 hover:text-green-500 transition">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -401,8 +444,8 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                   </div>
                 )}
 
-                {/* Widgets */}
-                {section.type === 'widgets' && widgets.length > 0 && (
+                {/* Widgets - TEMPORARIAMENTE DESABILITADO para destravar */}
+                {section.type === 'widgets' && widgets.length > 0 && false && (
                   <div 
                     className="widgets-section w-full overflow-hidden"
                     style={{
