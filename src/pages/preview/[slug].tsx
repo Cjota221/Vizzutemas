@@ -2,16 +2,18 @@ import { GetServerSideProps } from 'next'
 import Link from 'next/link'
 import Head from 'next/head'
 import { useState } from 'react'
-import { getThemeBySlug, generateBaseCss } from '@/lib/supabase/themes'
-import { getProducts, getDemoBanners } from '@/lib/supabase/store'
-import { ColorConfig } from '@/lib/types'
-import type { DemoProduct, DemoBanner } from '@/lib/supabase/store'
+import { getThemeBySlug, generateBaseCss, getActiveWidgetsByTheme } from '@/lib/supabase/themes'
+import { getProducts, getDemoBanners, getStoreConfig } from '@/lib/supabase/store'
+import { ColorConfig, ThemeWidget } from '@/lib/types'
+import type { DemoProduct, DemoBanner, StoreConfig } from '@/lib/supabase/store'
 
 type Props = {
   theme: { id: string; name: string; slug: string }
   products: DemoProduct[]
   banners: DemoBanner[]
+  widgets: ThemeWidget[]
   colors: ColorConfig
+  storeConfig: StoreConfig | null
   injectedCss: string
 }
 
@@ -31,8 +33,14 @@ const defaultColors: ColorConfig = {
   cor_fundo_rodape: '#1a1a2e'
 }
 
-export default function PreviewPage({ theme, products, banners, colors, injectedCss }: Props) {
+export default function PreviewPage({ theme, products, banners, widgets, colors, storeConfig, injectedCss }: Props) {
   const [cartCount, setCartCount] = useState(0)
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const isMobile = viewMode === 'mobile'
+  const logoUrl = storeConfig?.store_logo || null
 
   return (
     <>
@@ -45,79 +53,224 @@ export default function PreviewPage({ theme, products, banners, colors, injected
       <div className="bg-gray-900 text-white py-2 px-4 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-4">
           <Link href="/admin/themes" className="text-blue-400 hover:text-blue-300 text-sm">
-            Voltar ao Admin
+            ← Voltar
           </Link>
           <span className="text-sm">Preview: <strong>{theme.name}</strong></span>
         </div>
-        <Link href={`/admin/themes/${theme.id}`} className="px-3 py-1 bg-blue-600 rounded text-sm hover:bg-blue-700">
-          Editar Tema
-        </Link>
-      </div>
-
-      {/* Preview da Loja */}
-      <div style={{ backgroundColor: colors.cor_fundo_pagina }} className="min-h-screen">
-        {/* Barra Superior */}
-        <div className="text-center py-2 text-xs font-medium text-white" style={{ backgroundColor: colors.cor_fundo_barra_superior }}>
-          Frete Gratis acima de R$ 299 | Use o cupom PRIMEIRACOMPRA
-        </div>
-
-        {/* Header */}
-        <header className="shadow-sm px-4 py-3" style={{ backgroundColor: colors.cor_fundo_cabecalho }}>
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
-            <div className="w-12 h-12 rounded-full border-2 flex items-center justify-center" style={{ borderColor: colors.cor_botoes_cabecalho }}>
-              <span className="text-xs font-bold" style={{ color: colors.cor_botoes_cabecalho }}>LOGO</span>
-            </div>
-            <button className="px-4 py-2 rounded text-white text-sm" style={{ backgroundColor: colors.cor_botoes_cabecalho }}>
-              Carrinho ({cartCount})
+        <div className="flex items-center gap-2">
+          {/* Toggle Desktop/Mobile */}
+          <div className="flex bg-gray-800 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('desktop')}
+              className={`px-3 py-1 rounded text-xs font-medium transition ${viewMode === 'desktop' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              🖥️ Desktop
+            </button>
+            <button
+              onClick={() => setViewMode('mobile')}
+              className={`px-3 py-1 rounded text-xs font-medium transition ${viewMode === 'mobile' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
+            >
+              📱 Mobile
             </button>
           </div>
-        </header>
+          <Link href={`/admin/themes/${theme.id}`} className="px-3 py-1 bg-blue-600 rounded text-sm hover:bg-blue-700">
+            Editar
+          </Link>
+        </div>
+      </div>
 
-        {/* Banners */}
-        {banners.length > 0 && (
-          <div className="mb-6">
-            {banners.map(banner => (
-              <img key={banner.id} src={banner.image_desktop} alt={banner.title || 'Banner'} className="w-full h-auto object-cover" />
-            ))}
+      {/* Container do Preview */}
+      <div className={`mx-auto transition-all duration-300 ${isMobile ? 'max-w-[375px] shadow-2xl my-4 rounded-3xl overflow-hidden border-8 border-gray-800' : ''}`}>
+        
+        {/* Preview da Loja */}
+        <div style={{ backgroundColor: colors.cor_fundo_pagina }} className="min-h-screen">
+          
+          {/* Barra Superior */}
+          <div 
+            className="text-center py-2 text-xs font-medium text-white"
+            style={{ backgroundColor: colors.cor_fundo_barra_superior }}
+          >
+            {storeConfig?.top_bar_text || '🎁 Frete Grátis acima de R$ 299 | Use o cupom PRIMEIRACOMPRA'}
           </div>
-        )}
 
-        {/* Produtos */}
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <h2 className="text-xl font-bold mb-4" style={{ color: colors.cor_detalhes_gerais }}>Nossos Produtos</h2>
+          {/* Header */}
+          <header 
+            className="shadow-sm px-4 py-3"
+            style={{ backgroundColor: colors.cor_fundo_cabecalho }}
+          >
+            <div className="flex items-center justify-between">
+              {/* Menu Hamburger */}
+              <button 
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 rounded-lg hover:bg-gray-100 transition"
+              >
+                <span className="w-5 h-0.5 rounded" style={{ backgroundColor: colors.cor_botoes_cabecalho }}></span>
+                <span className="w-5 h-0.5 rounded" style={{ backgroundColor: colors.cor_botoes_cabecalho }}></span>
+                <span className="w-5 h-0.5 rounded" style={{ backgroundColor: colors.cor_botoes_cabecalho }}></span>
+              </button>
 
-          {products.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 mb-4">Nenhum produto cadastrado ainda.</p>
-              <Link href={`/admin/themes/${theme.id}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                Cadastrar Produtos
-              </Link>
+              {/* Logo Centralizada */}
+              <div className="flex-1 flex justify-center">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="h-12 object-contain" />
+                ) : (
+                  <div 
+                    className="w-14 h-14 rounded-full border-2 flex items-center justify-center"
+                    style={{ borderColor: colors.cor_botoes_cabecalho }}
+                  >
+                    <span className="text-xs font-bold" style={{ color: colors.cor_botoes_cabecalho }}>LOGO</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Carrinho com Bolinha */}
+              <button 
+                className="relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition"
+              >
+                <svg className="w-6 h-6" fill="none" stroke={colors.cor_botoes_cabecalho} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {cartCount > 0 && (
+                  <span 
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center"
+                    style={{ backgroundColor: colors.cor_detalhes_gerais }}
+                  >
+                    {cartCount > 9 ? '9+' : cartCount}
+                  </span>
+                )}
+              </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {products.map(product => (
-                <div key={product.id} className="bg-white rounded-lg shadow-sm overflow-hidden border hover:shadow-md transition-shadow">
-                  <div className="aspect-square bg-gray-100">
-                    <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="p-3">
-                    <h3 className="text-sm font-medium text-gray-800 line-clamp-2 mb-2">{product.name}</h3>
-                    {product.original_price && <p className="text-xs text-gray-400 line-through">R$ {product.original_price.toFixed(2)}</p>}
-                    <p className="text-lg font-bold" style={{ color: colors.cor_detalhes_gerais }}>R$ {product.price.toFixed(2)}</p>
-                    <button onClick={() => setCartCount(c => c + 1)} className="w-full mt-2 py-2 text-white text-sm font-medium rounded" style={{ backgroundColor: colors.cor_botao_enviar_pedido }}>
-                      Comprar
-                    </button>
-                  </div>
+
+            {/* Barra de Busca */}
+            <div className="mt-3">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="O que você procura?"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2.5 pl-10 rounded-full border border-gray-200 text-sm focus:outline-none focus:border-pink-400"
+                  style={{ backgroundColor: colors.cor_detalhes_fundo }}
+                />
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+          </header>
+
+          {/* Menu Mobile Overlay */}
+          {menuOpen && (
+            <div className="fixed inset-0 z-40">
+              <div className="absolute inset-0 bg-black/50" onClick={() => setMenuOpen(false)} />
+              <div 
+                className="absolute left-0 top-0 bottom-0 w-64 shadow-xl p-4"
+                style={{ backgroundColor: colors.cor_fundo_menu_mobile }}
+              >
+                <button onClick={() => setMenuOpen(false)} className="absolute top-4 right-4 text-gray-500">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <nav className="mt-12 space-y-2">
+                  <a href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-100 font-medium">Início</a>
+                  <a href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-100 font-medium">Categorias</a>
+                  <a href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-100 font-medium">Promoções</a>
+                  <a href="#" className="block px-4 py-2 rounded-lg hover:bg-gray-100 font-medium">Contato</a>
+                </nav>
+              </div>
+            </div>
+          )}
+
+          {/* Banners */}
+          {banners.length > 0 && (
+            <div className="mb-4">
+              {banners.filter(b => b.is_active).map(banner => (
+                <div key={banner.id} className="w-full">
+                  <img 
+                    src={isMobile && banner.image_mobile ? banner.image_mobile : banner.image_desktop} 
+                    alt={banner.title || 'Banner'} 
+                    className="w-full h-auto object-cover"
+                  />
                 </div>
               ))}
             </div>
           )}
-        </div>
 
-        {/* Rodape */}
-        <footer className="mt-8 py-6 text-center text-white text-sm" style={{ backgroundColor: colors.cor_fundo_rodape }}>
-          2025 Loja Demo - Tema: {theme.name}
-        </footer>
+          {/* Widgets HTML (se houver) */}
+          {widgets.length > 0 && (
+            <div className="widgets-container">
+              {widgets.filter(w => w.is_active).map(widget => (
+                <div 
+                  key={widget.id}
+                  className="widget mb-4"
+                  dangerouslySetInnerHTML={{ __html: widget.html_content || '' }}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Produtos */}
+          <div className="px-4 py-6">
+            <h2 className="text-xl font-bold mb-4" style={{ color: colors.cor_detalhes_gerais }}>
+              Nossos Produtos
+            </h2>
+
+            {products.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <p className="text-gray-500 mb-4">Nenhum produto cadastrado ainda.</p>
+                <Link href={`/admin/themes/${theme.id}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                  Cadastrar Produtos
+                </Link>
+              </div>
+            ) : (
+              <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
+                {products.filter(p => p.is_active).map(product => (
+                  <div 
+                    key={product.id} 
+                    className="bg-white rounded-xl shadow-sm overflow-hidden border hover:shadow-md transition-shadow"
+                  >
+                    <div className="aspect-square bg-gray-100 relative">
+                      <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                      {product.badge && (
+                        <span 
+                          className="absolute top-2 left-2 px-2 py-0.5 text-xs font-bold text-white rounded"
+                          style={{ backgroundColor: colors.cor_detalhes_gerais }}
+                        >
+                          {product.badge === 'destaque' ? '⭐' : product.badge === 'novo' ? '🆕' : product.badge === 'promocao' ? '🔥' : '🏆'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <h3 className="text-sm font-medium text-gray-800 line-clamp-2 mb-1">{product.name}</h3>
+                      {product.original_price && (
+                        <p className="text-xs text-gray-400 line-through">R$ {product.original_price.toFixed(2)}</p>
+                      )}
+                      <p className="text-lg font-bold" style={{ color: colors.cor_detalhes_gerais }}>
+                        R$ {product.price.toFixed(2)}
+                      </p>
+                      <button 
+                        onClick={() => setCartCount(c => c + 1)} 
+                        className="w-full mt-2 py-2 text-white text-sm font-medium rounded-lg transition"
+                        style={{ backgroundColor: colors.cor_botao_enviar_pedido }}
+                      >
+                        {storeConfig?.btn_buy_text || 'COMPRAR'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Rodapé */}
+          <footer 
+            className="mt-8 py-6 px-4 text-center text-white text-sm"
+            style={{ backgroundColor: colors.cor_fundo_rodape }}
+          >
+            <p>{storeConfig?.footer_text || `© 2025 ${storeConfig?.store_name || 'Loja Demo'}`}</p>
+          </footer>
+        </div>
       </div>
     </>
   )
@@ -129,8 +282,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   
   if (!theme) return { notFound: true }
 
-  const products = await getProducts(theme.id)
-  const banners = await getDemoBanners(theme.id)
+  const [products, banners, widgets, storeConfig] = await Promise.all([
+    getProducts(theme.id),
+    getDemoBanners(theme.id),
+    getActiveWidgetsByTheme(theme.id),
+    getStoreConfig(theme.id)
+  ])
+
   const colors = theme.color_config ? { ...defaultColors, ...theme.color_config } : defaultColors
   const injectedCss = generateBaseCss(colors)
 
@@ -139,7 +297,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       theme: { id: theme.id, name: theme.name, slug: theme.slug },
       products,
       banners,
+      widgets,
       colors,
+      storeConfig,
       injectedCss,
     },
   }
