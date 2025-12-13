@@ -174,9 +174,8 @@ const defaultLayoutConfig: LayoutConfig = {
     { id: 'banner_principal', type: 'banner_principal', label: 'Banner Principal', enabled: true, order: 1 },
     { id: 'banner_categorias', type: 'banner_categorias', label: 'Banner de Categorias', enabled: true, order: 2 },
     { id: 'produtos', type: 'produtos', label: 'Produtos', enabled: true, order: 3 },
-    { id: 'widgets', type: 'widgets', label: 'Widgets', enabled: true, order: 4 },
-    { id: 'avaliacoes', type: 'avaliacoes', label: 'Avaliações', enabled: false, order: 5 },
-    { id: 'info_loja', type: 'info_loja', label: 'Informações da Loja', enabled: false, order: 6 },
+    { id: 'avaliacoes', type: 'avaliacoes', label: 'Avaliações', enabled: false, order: 4 },
+    { id: 'info_loja', type: 'info_loja', label: 'Informações da Loja', enabled: false, order: 5 },
   ],
   products_per_row: 6
 }
