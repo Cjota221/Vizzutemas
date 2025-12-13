@@ -4,7 +4,7 @@ import Head from 'next/head'
 import { useState } from 'react'
 import { getThemeBySlug, generateBaseCss, getActiveWidgetsByTheme } from '@/lib/supabase/themes'
 import { getProducts, getDemoBanners, getStoreConfig } from '@/lib/supabase/store'
-import { ColorConfig, ThemeWidget } from '@/lib/types'
+import { ColorConfig, ThemeWidget, LayoutConfig } from '@/lib/types'
 import type { DemoProduct, DemoBanner, StoreConfig } from '@/lib/supabase/store'
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
   banners: DemoBanner[]
   widgets: ThemeWidget[]
   colors: ColorConfig
+  layoutConfig: LayoutConfig
   storeConfig: StoreConfig | null
   injectedCss: string
 }
@@ -33,7 +34,19 @@ const defaultColors: ColorConfig = {
   cor_fundo_rodape: '#1a1a2e'
 }
 
-export default function PreviewPage({ theme, products, banners, widgets, colors, storeConfig, injectedCss }: Props) {
+const defaultLayoutConfig: LayoutConfig = {
+  sections: [
+    { id: 'banner_principal', type: 'banner_principal', label: 'Banner Principal', enabled: true, order: 1 },
+    { id: 'banner_categorias', type: 'banner_categorias', label: 'Banner de Categorias', enabled: true, order: 2 },
+    { id: 'produtos', type: 'produtos', label: 'Produtos', enabled: true, order: 3 },
+    { id: 'widgets', type: 'widgets', label: 'Widgets', enabled: true, order: 4 },
+    { id: 'avaliacoes', type: 'avaliacoes', label: 'Avaliações', enabled: false, order: 5 },
+    { id: 'info_loja', type: 'info_loja', label: 'Informações da Loja', enabled: false, order: 6 },
+  ],
+  products_per_row: 6
+}
+
+export default function PreviewPage({ theme, products, banners, widgets, colors, layoutConfig, storeConfig, injectedCss }: Props) {
   const [cartCount, setCartCount] = useState(0)
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop')
   const [menuOpen, setMenuOpen] = useState(false)
@@ -224,7 +237,15 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                 </Link>
               </div>
             ) : (
-              <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
+              <div className={`grid gap-3 ${
+                isMobile 
+                  ? 'grid-cols-2' 
+                  : layoutConfig.products_per_row === 6 
+                    ? 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6' 
+                    : layoutConfig.products_per_row === 5 
+                      ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' 
+                      : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+              }`}>
                 {products.filter(p => p.is_active).map(product => (
                   <div 
                     key={product.id} 
@@ -290,6 +311,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   ])
 
   const colors = theme.color_config ? { ...defaultColors, ...theme.color_config } : defaultColors
+  const layoutConfig = theme.layout_config ? { ...defaultLayoutConfig, ...theme.layout_config } : defaultLayoutConfig
   const injectedCss = generateBaseCss(colors)
 
   return {
@@ -299,6 +321,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       banners,
       widgets,
       colors,
+      layoutConfig,
       storeConfig,
       injectedCss,
     },

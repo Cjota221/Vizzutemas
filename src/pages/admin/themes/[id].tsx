@@ -19,12 +19,12 @@ import {
   upsertCssByPage
 } from '@/lib/supabase/themes'
 import { getProducts, getDemoBanners } from '@/lib/supabase/store'
-import type { Theme, ThemeWidget, ThemeBanner, ColorConfig, PageType } from '@/lib/types'
+import type { Theme, ThemeWidget, ThemeBanner, ColorConfig, PageType, LayoutConfig, LayoutSection } from '@/lib/types'
 import type { DemoProduct, DemoBanner } from '@/lib/supabase/store'
 import { ProductsTab, BannersTab } from '@/components/admin'
 import AdminLayout, { Card } from '@/components/admin/AdminLayout'
 
-type TabType = 'info' | 'cores' | 'produtos' | 'banners' | 'widgets' | 'css'
+type TabType = 'info' | 'layout' | 'cores' | 'produtos' | 'banners' | 'widgets' | 'css'
 
 // Cores padrão - exatamente como na plataforma
 const defaultColors: ColorConfig = {
@@ -99,6 +99,20 @@ export default function EditThemePage() {
   const [thumbnail, setThumbnail] = useState('')
   const [colors, setColors] = useState<ColorConfig>(defaultColors)
   
+  // Layout config - ordem das seções e produtos por linha
+  const defaultLayoutConfig: LayoutConfig = {
+    sections: [
+      { id: 'banner_principal', type: 'banner_principal', label: 'Banner Principal', enabled: true, order: 1 },
+      { id: 'banner_categorias', type: 'banner_categorias', label: 'Banner de Categorias', enabled: true, order: 2 },
+      { id: 'produtos', type: 'produtos', label: 'Produtos', enabled: true, order: 3 },
+      { id: 'widgets', type: 'widgets', label: 'Widgets', enabled: true, order: 4 },
+      { id: 'avaliacoes', type: 'avaliacoes', label: 'Avaliações', enabled: false, order: 5 },
+      { id: 'info_loja', type: 'info_loja', label: 'Informações da Loja', enabled: false, order: 6 },
+    ],
+    products_per_row: 6
+  }
+  const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>(defaultLayoutConfig)
+  
   // CSS por página (alinhado com PageType: 'home' | 'product' | 'cart')
   const [cssByPage, setCssByPage] = useState<Record<PageType, string>>({
     home: '',
@@ -144,6 +158,7 @@ export default function EditThemePage() {
         setStatus(themeData.status || 'draft')
         setThumbnail(themeData.thumbnail_url || '')
         if (themeData.color_config) setColors({ ...defaultColors, ...themeData.color_config })
+        if (themeData.layout_config) setLayoutConfig({ ...defaultLayoutConfig, ...themeData.layout_config })
         
         // Carregar CSS de cada página
         const cssPromises = pageTypes.map(async (page) => {
@@ -202,6 +217,41 @@ export default function EditThemePage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  async function handleSaveLayout() {
+    if (!theme) return
+    setSaving(true)
+    try {
+      await updateTheme(theme.id, { layout_config: layoutConfig } as any)
+      showMessage('success', 'Layout salvo!')
+    } catch (error) {
+      showMessage('error', 'Erro ao salvar layout')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function moveSection(index: number, direction: 'up' | 'down') {
+    const newSections = [...layoutConfig.sections]
+    const newIndex = direction === 'up' ? index - 1 : index + 1
+    if (newIndex < 0 || newIndex >= newSections.length) return
+    
+    // Trocar posições
+    const temp = newSections[index]
+    newSections[index] = newSections[newIndex]
+    newSections[newIndex] = temp
+    
+    // Atualizar order
+    newSections.forEach((s, i) => s.order = i + 1)
+    setLayoutConfig({ ...layoutConfig, sections: newSections })
+  }
+
+  function toggleSection(sectionId: string) {
+    const newSections = layoutConfig.sections.map(s => 
+      s.id === sectionId ? { ...s, enabled: !s.enabled } : s
+    )
+    setLayoutConfig({ ...layoutConfig, sections: newSections })
   }
 
   async function handleSaveColors() {
@@ -397,6 +447,7 @@ export default function EditThemePage() {
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'info', label: 'Informações' },
+    { id: 'layout', label: 'Layout' },
     { id: 'cores', label: 'Cores' },
     { id: 'produtos', label: 'Produtos' },
     { id: 'banners', label: 'Banners' },
@@ -496,6 +547,137 @@ export default function EditThemePage() {
               <button onClick={handleSaveInfo} disabled={saving} className="px-5 py-2.5 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition disabled:opacity-50">
                 {saving ? 'Salvando...' : 'Salvar Informações'}
               </button>
+            </div>
+          </Card>
+        )}
+
+        {/* Layout Tab - Ordenação de Seções */}
+        {activeTab === 'layout' && (
+          <Card>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800">Layout da Página</h2>
+                  <p className="text-sm text-gray-500 mt-1">Arraste e organize as seções como preferir</p>
+                </div>
+                <button onClick={handleSaveLayout} disabled={saving} className="px-4 py-2 bg-pink-500 hover:bg-pink-600 disabled:opacity-50 text-white rounded-lg font-medium text-sm transition">
+                  {saving ? 'Salvando...' : 'Salvar Layout'}
+                </button>
+              </div>
+
+              {/* Ordenação de Seções */}
+              <div className="space-y-2 mb-8">
+                <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">Ordem das Seções</h3>
+                {layoutConfig.sections.sort((a, b) => a.order - b.order).map((section, index) => (
+                  <div 
+                    key={section.id} 
+                    className={`flex items-center gap-4 p-4 rounded-lg border-2 transition ${
+                      section.enabled 
+                        ? 'bg-white border-gray-200 hover:border-pink-300' 
+                        : 'bg-gray-50 border-gray-100 opacity-60'
+                    }`}
+                  >
+                    {/* Número da ordem */}
+                    <span className="w-8 h-8 flex items-center justify-center bg-pink-100 text-pink-600 font-bold rounded-lg text-sm">
+                      {index + 1}
+                    </span>
+                    
+                    {/* Nome da seção */}
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-800">{section.label}</span>
+                      <span className="text-xs text-gray-400 ml-2">({section.type})</span>
+                    </div>
+                    
+                    {/* Toggle ativo/inativo */}
+                    <button 
+                      onClick={() => toggleSection(section.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                        section.enabled 
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                          : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                      }`}
+                    >
+                      {section.enabled ? '✓ Ativo' : 'Inativo'}
+                    </button>
+                    
+                    {/* Botões de mover */}
+                    <div className="flex gap-1">
+                      <button 
+                        onClick={() => moveSection(index, 'up')}
+                        disabled={index === 0}
+                        className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Mover para cima"
+                      >
+                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      </button>
+                      <button 
+                        onClick={() => moveSection(index, 'down')}
+                        disabled={index === layoutConfig.sections.length - 1}
+                        className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Mover para baixo"
+                      >
+                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Produtos por linha */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4">Grid de Produtos</h3>
+                <div className="flex items-center gap-4">
+                  <label className="text-sm font-medium text-gray-700">Produtos por linha (Desktop):</label>
+                  <div className="flex gap-2">
+                    {[4, 5, 6].map(num => (
+                      <button
+                        key={num}
+                        onClick={() => setLayoutConfig({ ...layoutConfig, products_per_row: num })}
+                        className={`w-12 h-12 rounded-lg font-bold text-lg transition ${
+                          layoutConfig.products_per_row === num
+                            ? 'bg-pink-500 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-sm text-gray-500">colunas</span>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">No mobile serão 2 produtos por linha automaticamente</p>
+              </div>
+            </div>
+
+            {/* Preview visual do layout */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-4">Preview do Layout</h3>
+              <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 space-y-2">
+                {layoutConfig.sections
+                  .filter(s => s.enabled)
+                  .sort((a, b) => a.order - b.order)
+                  .map(section => (
+                    <div 
+                      key={section.id}
+                      className={`p-3 rounded text-center text-sm font-medium ${
+                        section.type === 'banner_principal' ? 'bg-pink-100 text-pink-700 h-16' :
+                        section.type === 'banner_categorias' ? 'bg-purple-100 text-purple-700 h-10' :
+                        section.type === 'produtos' ? 'bg-blue-100 text-blue-700 h-24' :
+                        section.type === 'widgets' ? 'bg-yellow-100 text-yellow-700 h-12' :
+                        section.type === 'avaliacoes' ? 'bg-green-100 text-green-700 h-12' :
+                        'bg-gray-100 text-gray-700 h-10'
+                      } flex items-center justify-center`}
+                    >
+                      {section.label}
+                      {section.type === 'produtos' && ` (${layoutConfig.products_per_row} por linha)`}
+                    </div>
+                  ))
+                }
+              </div>
             </div>
           </Card>
         )}

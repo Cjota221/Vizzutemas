@@ -22,6 +22,21 @@ export type ColorConfig = {
 // Tipo de página para CSS específico (alinhado com o banco de dados)
 export type PageType = 'home' | 'product' | 'cart'
 
+// Seção do layout da página
+export type LayoutSection = {
+  id: string
+  type: 'banner_principal' | 'banner_categorias' | 'produtos' | 'widgets' | 'avaliacoes' | 'info_loja'
+  label: string
+  enabled: boolean
+  order: number
+}
+
+// Configuração de layout do tema
+export type LayoutConfig = {
+  sections: LayoutSection[]
+  products_per_row: number  // 4, 5 ou 6 produtos por linha
+}
+
 // Tema - representa um tema disponível na plataforma
 export type Theme = {
   id: string
@@ -32,6 +47,7 @@ export type Theme = {
   thumbnail_url?: string
   status?: 'draft' | 'published' | 'archived'
   color_config?: ColorConfig
+  layout_config?: LayoutConfig
   created_at?: string
 }
 
