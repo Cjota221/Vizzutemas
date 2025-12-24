@@ -265,7 +265,7 @@ function WidgetRenderer({
       
       console.log(`🎉 [WIDGET DEBUG] Widget "${widget.name}" carregado completamente`)
       
-      // Verificar se ESTE widget bloqueou o scroll
+      // Verificar e CORRIGIR bloqueio de scroll automaticamente
       setTimeout(() => {
         const bodyOverflow = window.getComputedStyle(document.body).overflow
         const htmlOverflow = window.getComputedStyle(document.documentElement).overflow
@@ -273,6 +273,14 @@ function WidgetRenderer({
         if (bodyOverflow === 'hidden' || htmlOverflow === 'hidden') {
           console.error(`🔴 [SCROLL BLOCKER] O widget "${widget.name}" BLOQUEOU O SCROLL!`)
           console.error(`🔴 body overflow: ${bodyOverflow}, html overflow: ${htmlOverflow}`)
+          
+          // FIX AUTOMÁTICO: Forçar desbloqueio
+          console.log(`🔧 [AUTO FIX] Desbloqueando scroll automaticamente...`)
+          document.body.style.overflow = 'auto'
+          document.body.style.overflowX = 'hidden' // Mantém bloqueio horizontal
+          document.documentElement.style.overflow = 'auto'
+          document.documentElement.style.overflowX = 'hidden'
+          console.log(`✅ [AUTO FIX] Scroll restaurado!`)
         }
       }, 100)
       
