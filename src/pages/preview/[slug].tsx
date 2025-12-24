@@ -376,6 +376,45 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
   // Prioridade: layoutConfig.logo_url > storeConfig.store_logo
   const logoUrl = (layoutConfig as any)?.logo_url || storeConfig?.store_logo || null
 
+  // Detector de scroll bloqueado
+  useEffect(() => {
+    if (widgetsDisabled) return
+
+    const checkScrollBlock = () => {
+      const body = document.body
+      const html = document.documentElement
+      
+      console.log('🔍 [SCROLL DEBUG] Verificando bloqueios de scroll...')
+      console.log('📊 [SCROLL DEBUG] body.style.overflow:', body.style.overflow)
+      console.log('📊 [SCROLL DEBUG] html.style.overflow:', html.style.overflow)
+      console.log('📊 [SCROLL DEBUG] body.style.position:', body.style.position)
+      console.log('📊 [SCROLL DEBUG] html.style.position:', html.style.position)
+      console.log('📊 [SCROLL DEBUG] body.style.height:', body.style.height)
+      console.log('📊 [SCROLL DEBUG] html.style.height:', html.style.height)
+      
+      const bodyComputed = window.getComputedStyle(body)
+      const htmlComputed = window.getComputedStyle(html)
+      
+      console.log('📊 [SCROLL DEBUG] body computed overflow:', bodyComputed.overflow)
+      console.log('📊 [SCROLL DEBUG] html computed overflow:', htmlComputed.overflow)
+      
+      // Detectar overflow: hidden
+      if (bodyComputed.overflow === 'hidden' || htmlComputed.overflow === 'hidden') {
+        console.error('🚫 [SCROLL DEBUG] DETECTADO: overflow hidden! Algum widget está bloqueando o scroll!')
+      }
+      
+      // Detectar position: fixed
+      if (bodyComputed.position === 'fixed' || htmlComputed.position === 'fixed') {
+        console.error('🚫 [SCROLL DEBUG] DETECTADO: position fixed! Algum widget está fixando a página!')
+      }
+    }
+
+    // Verificar após widgets carregarem
+    const timer = setTimeout(checkScrollBlock, 2000)
+    
+    return () => clearTimeout(timer)
+  }, [widgetsDisabled])
+
   // CSS com variáveis de cores para widgets
   const colorVariablesCss = `
     :root {
@@ -416,6 +455,23 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
           <span className="text-sm">Preview: <strong>{theme.name}</strong></span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Botão de Emergência - Forçar Desbloqueio de Scroll */}
+          <button
+            onClick={() => {
+              console.log('🔓 [SCROLL FIX] Forçando desbloqueio de scroll...')
+              document.body.style.overflow = ''
+              document.body.style.position = ''
+              document.body.style.height = ''
+              document.documentElement.style.overflow = ''
+              document.documentElement.style.position = ''
+              document.documentElement.style.height = ''
+              console.log('✅ [SCROLL FIX] Scroll desbloqueado!')
+            }}
+            className="px-3 py-1 rounded text-xs font-medium transition bg-purple-600 hover:bg-purple-700 text-white"
+            title="Forçar desbloqueio de scroll se a página travar"
+          >
+            🔓 Fix Scroll
+          </button>
           {/* Botão de Emergência - Desabilitar Widgets */}
           {widgets.length > 0 && (
             <button
