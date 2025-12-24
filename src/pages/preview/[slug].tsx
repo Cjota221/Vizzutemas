@@ -265,6 +265,17 @@ function WidgetRenderer({
       
       console.log(`🎉 [WIDGET DEBUG] Widget "${widget.name}" carregado completamente`)
       
+      // Verificar se ESTE widget bloqueou o scroll
+      setTimeout(() => {
+        const bodyOverflow = window.getComputedStyle(document.body).overflow
+        const htmlOverflow = window.getComputedStyle(document.documentElement).overflow
+        
+        if (bodyOverflow === 'hidden' || htmlOverflow === 'hidden') {
+          console.error(`🔴 [SCROLL BLOCKER] O widget "${widget.name}" BLOQUEOU O SCROLL!`)
+          console.error(`🔴 body overflow: ${bodyOverflow}, html overflow: ${htmlOverflow}`)
+        }
+      }, 100)
+      
     } catch (error) {
       console.error(`❌ [WIDGET DEBUG] ERRO CRÍTICO ao carregar widget "${widget.name}":`, error)
       setHasError(true)
