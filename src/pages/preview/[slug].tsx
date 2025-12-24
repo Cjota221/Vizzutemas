@@ -196,7 +196,7 @@ type Props = {
   injectedCss: string
 }
 
-// Componente para renderizar um widget individual com scripts funcionando
+// Componente para renderizar um widget individual com scripts funcionando + DEBUG
 function WidgetRenderer({ 
   widget, 
   colors 
@@ -205,54 +205,113 @@ function WidgetRenderer({
   colors: ColorConfig 
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const [hasError, setHasError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
   
   useEffect(() => {
     if (!containerRef.current || !widget.html_content) return
     
-    // Separar HTML de Scripts
-    const htmlWithoutScripts = widget.html_content.replace(/<script[\s\S]*?<\/script>/gi, '')
-    const scripts: string[] = []
-    widget.html_content.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, (match, code) => {
-      scripts.push(code)
-      return ''
-    })
+    console.log(`🔧 [WIDGET DEBUG] Carregando widget: "${widget.name}" (ID: ${widget.id})`)
     
-    // Inserir HTML
-    containerRef.current.innerHTML = htmlWithoutScripts
-    
-    // Executar scripts em escopo isolado (IIFE)
-    scripts.forEach((code, index) => {
-      try {
-        // Criar função isolada para cada script
-        const isolatedScript = `(function() {
-          try {
-            ${code}
-          } catch(e) {
-            console.warn('Widget script error:', e);
+    try {
+      // Separar HTML de Scripts
+      const htmlWithoutScripts = widget.html_content.replace(/<script[\s\S]*?<\/script>/gi, '')
+      const scripts: string[] = []
+      widget.html_content.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, (match, code) => {
+        scripts.push(code)
+        return ''
+      })
+      
+      console.log(`📦 [WIDGET DEBUG] Widget "${widget.name}" tem ${scripts.length} scripts`)
+      
+      // Inserir HTML
+      containerRef.current.innerHTML = htmlWithoutScripts
+      console.log(`✅ [WIDGET DEBUG] HTML do widget "${widget.name}" inserido com sucesso`)
+      
+      // Executar scripts em escopo isolado (IIFE) com timeout de segurança
+      scripts.forEach((code, index) => {
+        try {
+          console.log(`🔨 [WIDGET DEBUG] Executando script ${index + 1}/${scripts.length} do widget "${widget.name}"`)
+          
+          // Criar função isolada para cada script com timeout
+          const isolatedScript = `(function() {
+            try {
+              console.log('[WIDGET SCRIPT] Iniciando script ${index + 1} do widget "${widget.name}"');
+              ${code}
+              console.log('[WIDGET SCRIPT] Script ${index + 1} executado com sucesso');
+            } catch(e) {
+              console.error('[WIDGET SCRIPT ERROR]', e);
+              throw e;
+            }
+          })();`
+          
+          const scriptElement = document.createElement('script')
+          scriptElement.textContent = isolatedScript
+          scriptElement.onerror = (e) => {
+            console.error(`❌ [WIDGET DEBUG] Erro ao executar script ${index + 1} do widget "${widget.name}":`, e)
+            setHasError(true)
+            setErrorMessage(`Erro no script ${index + 1}`)
           }
-        })();`
-        
-        const scriptElement = document.createElement('script')
-        scriptElement.textContent = isolatedScript
-        containerRef.current?.appendChild(scriptElement)
-      } catch (error) {
-        console.warn(`Widget ${widget.id} script ${index} error:`, error)
-      }
-    })
+          
+          containerRef.current?.appendChild(scriptElement)
+          console.log(`✅ [WIDGET DEBUG] Script ${index + 1} do widget "${widget.name}" adicionado`)
+          
+        } catch (error) {
+          console.error(`❌ [WIDGET DEBUG] Widget "${widget.name}" script ${index + 1} error:`, error)
+          setHasError(true)
+          setErrorMessage(`Erro no script ${index + 1}: ${error}`)
+        }
+      })
+      
+      console.log(`🎉 [WIDGET DEBUG] Widget "${widget.name}" carregado completamente`)
+      
+    } catch (error) {
+      console.error(`❌ [WIDGET DEBUG] ERRO CRÍTICO ao carregar widget "${widget.name}":`, error)
+      setHasError(true)
+      setErrorMessage(`Erro crítico: ${error}`)
+    }
     
     // Cleanup: remover scripts ao desmontar
     return () => {
+      console.log(`🧹 [WIDGET DEBUG] Limpando widget "${widget.name}"`)
       if (containerRef.current) {
         const scripts = containerRef.current.querySelectorAll('script')
         scripts.forEach(s => s.remove())
       }
     }
-  }, [widget.html_content, widget.id])
+  }, [widget.html_content, widget.id, widget.name])
+  
+  // Se tiver erro, mostrar card de erro ao invés de travar
+  if (hasError) {
+    return (
+      <div 
+        className="widget-error" 
+        style={{
+          padding: '20px',
+          margin: '10px 0',
+          backgroundColor: '#fee',
+          border: '2px solid #f00',
+          borderRadius: '8px',
+          fontFamily: 'monospace'
+        }}
+      >
+        <h3 style={{ color: '#c00', marginTop: 0 }}>⚠️ Widget com Erro</h3>
+        <p><strong>Nome:</strong> {widget.name}</p>
+        <p><strong>ID:</strong> {widget.id}</p>
+        <p><strong>Erro:</strong> {errorMessage}</p>
+        <p style={{ fontSize: '12px', color: '#666' }}>
+          Verifique o console (F12) para mais detalhes. Este widget foi isolado para não travar a página.
+        </p>
+      </div>
+    )
+  }
   
   return (
     <div 
       ref={containerRef}
       className="widget"
+      data-widget-id={widget.id}
+      data-widget-name={widget.name}
       style={{
         // Variáveis CSS disponíveis para os widgets
         '--cor-fundo-pagina': colors.cor_fundo_pagina,
@@ -311,6 +370,7 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop')
   const [menuOpen, setMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [widgetsDisabled, setWidgetsDisabled] = useState(false)
 
   const isMobile = viewMode === 'mobile'
   // Prioridade: layoutConfig.logo_url > storeConfig.store_logo
@@ -356,6 +416,27 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
           <span className="text-sm">Preview: <strong>{theme.name}</strong></span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Botão de Emergência - Desabilitar Widgets */}
+          {widgets.length > 0 && (
+            <button
+              onClick={() => {
+                setWidgetsDisabled(!widgetsDisabled)
+                if (!widgetsDisabled) {
+                  console.log('🚨 EMERGENCY: All widgets disabled by user')
+                } else {
+                  console.log('✅ RECOVERY: Widgets re-enabled')
+                }
+              }}
+              className={`px-3 py-1 rounded text-xs font-medium transition ${
+                widgetsDisabled 
+                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+              title={widgetsDisabled ? 'Reabilitar widgets' : 'Desabilitar widgets se a página travar'}
+            >
+              {widgetsDisabled ? '✓ Widgets Off' : '⚠️ Kill Widgets'}
+            </button>
+          )}
           {/* Toggle Desktop/Mobile */}
           <div className="flex bg-gray-800 rounded-lg p-1">
             <button
@@ -558,19 +639,37 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                       }
                     `}} />
                     
-                    {/* Renderizar widgets usando componente isolado */}
-                    {(() => {
-                      const sectionData = section as any
-                      const filteredWidgets = sectionData.widget_ids && sectionData.widget_ids.length > 0
-                        ? widgets.filter(w => w.is_active && sectionData.widget_ids.includes(w.id))
-                        : widgets.filter(w => w.is_active)
-                      
-                      return filteredWidgets
-                        .sort((a, b) => a.display_order - b.display_order)
-                        .map(widget => (
-                          <WidgetRenderer key={widget.id} widget={widget} colors={colors} />
-                        ))
-                    })()}
+                    {/* Se widgets desabilitados, mostra aviso */}
+                    {widgetsDisabled ? (
+                      <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-6 mx-4 my-4">
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">⚠️</span>
+                          <div>
+                            <h3 className="text-yellow-900 font-semibold mb-2">Widgets Desabilitados</h3>
+                            <p className="text-yellow-800 text-sm mb-3">
+                              Os widgets foram desabilitados temporariamente. Clique no botão <strong>"Kill Widgets"</strong> no topo da página para reativá-los.
+                            </p>
+                            <p className="text-yellow-700 text-xs">
+                              {widgets.filter(w => w.is_active).length} widget(s) não estão sendo renderizados no momento.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Renderizar widgets usando componente isolado */
+                      (() => {
+                        const sectionData = section as any
+                        const filteredWidgets = sectionData.widget_ids && sectionData.widget_ids.length > 0
+                          ? widgets.filter(w => w.is_active && sectionData.widget_ids.includes(w.id))
+                          : widgets.filter(w => w.is_active)
+                        
+                        return filteredWidgets
+                          .sort((a, b) => a.display_order - b.display_order)
+                          .map(widget => (
+                            <WidgetRenderer key={widget.id} widget={widget} colors={colors} />
+                          ))
+                      })()
+                    )}
                   </div>
                 )}
 
