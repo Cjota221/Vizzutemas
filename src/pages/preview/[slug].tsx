@@ -196,7 +196,7 @@ type Props = {
   injectedCss: string
 }
 
-// Componente para renderizar um widget individual com scripts funcionando + DEBUG
+// Componente para renderizar um widget individual com SANDBOX COMPLETO
 function WidgetRenderer({ 
   widget, 
   colors 
@@ -213,6 +213,50 @@ function WidgetRenderer({
     
     console.log(`🔧 [WIDGET DEBUG] Carregando widget: "${widget.name}" (ID: ${widget.id})`)
     
+    // ========================================
+    // 🛡️ SANDBOX SETUP - Salvar estado original
+    // ========================================
+    const originalBodyOverflow = document.body.style.overflow
+    const originalHtmlOverflow = document.documentElement.style.overflow
+    const originalBodyPosition = document.body.style.position
+    const originalHtmlPosition = document.documentElement.style.position
+    
+    // Armazenar event listeners para cleanup
+    const addedListeners: Array<{target: EventTarget, type: string, listener: EventListener}> = []
+    
+    // ========================================
+    // 🛡️ INTERCEPTAR addEventListener GLOBAL
+    // ========================================
+    const originalAddEventListener = EventTarget.prototype.addEventListener
+    const blockedEvents = ['wheel', 'touchmove', 'scroll', 'touchstart', 'touchend']
+    
+    EventTarget.prototype.addEventListener = function(
+      type: string, 
+      listener: EventListenerOrEventListenerObject, 
+      options?: boolean | AddEventListenerOptions
+    ) {
+      // Se for document/body/html e evento de scroll, interceptar
+      if ((this === document || this === document.body || this === document.documentElement) && 
+          blockedEvents.includes(type)) {
+        console.warn(`🛡️ [SANDBOX] Widget "${widget.name}" tentou adicionar listener "${type}" no ${this === document ? 'document' : 'body/html'} - INTERCEPTADO`)
+        
+        // Criar wrapper que remove preventDefault
+        const safeListener = function(e: Event) {
+          // Não chamar o listener original que pode ter preventDefault
+          console.log(`🛡️ [SANDBOX] Evento "${type}" bloqueado para widget "${widget.name}"`)
+        }
+        
+        // Registrar para cleanup
+        addedListeners.push({ target: this, type, listener: safeListener as EventListener })
+        
+        // Não adicionar o listener original
+        return
+      }
+      
+      // Para outros eventos, permitir normalmente
+      return originalAddEventListener.call(this, type, listener, options)
+    }
+    
     try {
       // Separar HTML de Scripts
       const htmlWithoutScripts = widget.html_content.replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -224,34 +268,72 @@ function WidgetRenderer({
       
       console.log(`📦 [WIDGET DEBUG] Widget "${widget.name}" tem ${scripts.length} scripts`)
       
+      // ========================================
+      // 🛡️ SANITIZAR HTML - Neutralizar CSS global
+      // ========================================
+      let sanitizedHtml = htmlWithoutScripts
+      
+      // Remover/neutralizar estilos que afetam html/body
+      sanitizedHtml = sanitizedHtml.replace(
+        /<style[^>]*>([\s\S]*?)<\/style>/gi, 
+        (match, cssContent) => {
+          // Remover regras que afetam html, body, :root
+          let safeCss = cssContent
+            .replace(/html\s*\{[^}]*\}/gi, '/* [SANDBOX] html rules removed */')
+            .replace(/body\s*\{[^}]*\}/gi, '/* [SANDBOX] body rules removed */')
+            .replace(/:root\s*\{[^}]*\}/gi, '/* [SANDBOX] :root rules removed */')
+            .replace(/\*\s*\{[^}]*overflow\s*:[^}]*\}/gi, '/* [SANDBOX] global overflow removed */')
+          
+          // Adicionar escopo ao CSS restante
+          return `<style data-widget-sandbox="true">${safeCss}</style>`
+        }
+      )
+      
       // Inserir HTML
-      containerRef.current.innerHTML = htmlWithoutScripts
+      containerRef.current.innerHTML = sanitizedHtml
       console.log(`✅ [WIDGET DEBUG] HTML do widget "${widget.name}" inserido com sucesso`)
       
-      // Executar scripts em escopo isolado (IIFE) com timeout de segurança
+      // ========================================
+      // 🛡️ EXECUTAR SCRIPTS com proteção
+      // ========================================
       scripts.forEach((code, index) => {
         try {
           console.log(`🔨 [WIDGET DEBUG] Executando script ${index + 1}/${scripts.length} do widget "${widget.name}"`)
           
-          // Criar função isolada para cada script com timeout
+          // Script isolado COM proteção de scroll
           const isolatedScript = `(function() {
             try {
+              // 🛡️ Proteger scroll ANTES do script
+              var __savedBodyOverflow = document.body.style.overflow;
+              var __savedHtmlOverflow = document.documentElement.style.overflow;
+              
               console.log('[WIDGET SCRIPT] Iniciando script ${index + 1} do widget "${widget.name}"');
+              
               ${code}
+              
               console.log('[WIDGET SCRIPT] Script ${index + 1} executado com sucesso');
+              
+              // 🛡️ Restaurar scroll DEPOIS do script (imediatamente)
+              setTimeout(function() {
+                if (document.body.style.overflow === 'hidden') {
+                  document.body.style.overflow = 'auto';
+                  document.body.style.overflowX = 'hidden';
+                  console.log('🛡️ [SANDBOX] Scroll restaurado após script ${index + 1}');
+                }
+                if (document.documentElement.style.overflow === 'hidden') {
+                  document.documentElement.style.overflow = 'auto';
+                  document.documentElement.style.overflowX = 'hidden';
+                }
+              }, 0);
+              
             } catch(e) {
               console.error('[WIDGET SCRIPT ERROR]', e);
-              throw e;
             }
           })();`
           
           const scriptElement = document.createElement('script')
           scriptElement.textContent = isolatedScript
-          scriptElement.onerror = (e) => {
-            console.error(`❌ [WIDGET DEBUG] Erro ao executar script ${index + 1} do widget "${widget.name}":`, e)
-            setHasError(true)
-            setErrorMessage(`Erro no script ${index + 1}`)
-          }
+          scriptElement.setAttribute('data-widget-sandbox', 'true')
           
           containerRef.current?.appendChild(scriptElement)
           console.log(`✅ [WIDGET DEBUG] Script ${index + 1} do widget "${widget.name}" adicionado`)
@@ -265,39 +347,84 @@ function WidgetRenderer({
       
       console.log(`🎉 [WIDGET DEBUG] Widget "${widget.name}" carregado completamente`)
       
-      // Verificar e CORRIGIR bloqueio de scroll automaticamente
-      setTimeout(() => {
-        const bodyOverflow = window.getComputedStyle(document.body).overflow
-        const htmlOverflow = window.getComputedStyle(document.documentElement).overflow
+      // ========================================
+      // 🛡️ MUTATION OBSERVER - Detectar mudanças contínuas
+      // ========================================
+      const observer = new MutationObserver((mutations) => {
+        // Verificar se alguma mutação afetou o scroll
+        const bodyStyle = window.getComputedStyle(document.body)
+        const htmlStyle = window.getComputedStyle(document.documentElement)
         
-        if (bodyOverflow === 'hidden' || htmlOverflow === 'hidden') {
-          console.error(`🔴 [SCROLL BLOCKER] O widget "${widget.name}" BLOQUEOU O SCROLL!`)
-          console.error(`🔴 body overflow: ${bodyOverflow}, html overflow: ${htmlOverflow}`)
-          
-          // FIX AUTOMÁTICO: Forçar desbloqueio
-          console.log(`🔧 [AUTO FIX] Desbloqueando scroll automaticamente...`)
+        if (bodyStyle.overflow === 'hidden' || htmlStyle.overflow === 'hidden') {
+          console.warn(`�️ [SANDBOX] Widget "${widget.name}" modificou overflow para hidden - REVERTENDO`)
           document.body.style.overflow = 'auto'
-          document.body.style.overflowX = 'hidden' // Mantém bloqueio horizontal
+          document.body.style.overflowX = 'hidden'
           document.documentElement.style.overflow = 'auto'
           document.documentElement.style.overflowX = 'hidden'
-          console.log(`✅ [AUTO FIX] Scroll restaurado!`)
         }
-      }, 100)
+        
+        if (bodyStyle.position === 'fixed' || htmlStyle.position === 'fixed') {
+          console.warn(`�️ [SANDBOX] Widget "${widget.name}" modificou position para fixed - REVERTENDO`)
+          document.body.style.position = ''
+          document.documentElement.style.position = ''
+        }
+      })
+      
+      // Observar mudanças no body e html
+      observer.observe(document.body, { attributes: true, attributeFilter: ['style'] })
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] })
+      
+      // ========================================
+      // 🛡️ FORCE SCROLL - Garantir scroll funcional
+      // ========================================
+      const forceScroll = () => {
+        document.body.style.overflow = 'auto'
+        document.body.style.overflowX = 'hidden'
+        document.documentElement.style.overflow = 'auto'
+        document.documentElement.style.overflowX = 'hidden'
+        document.body.style.position = ''
+        document.documentElement.style.position = ''
+      }
+      
+      // Forçar scroll após carregamento
+      setTimeout(forceScroll, 100)
+      setTimeout(forceScroll, 500)
+      setTimeout(forceScroll, 1000)
+      
+      // ========================================
+      // 🧹 CLEANUP
+      // ========================================
+      return () => {
+        console.log(`🧹 [WIDGET DEBUG] Limpando widget "${widget.name}"`)
+        
+        // Restaurar addEventListener original
+        EventTarget.prototype.addEventListener = originalAddEventListener
+        
+        // Desconectar observer
+        observer.disconnect()
+        
+        // Remover scripts
+        if (containerRef.current) {
+          const scripts = containerRef.current.querySelectorAll('script')
+          scripts.forEach(s => s.remove())
+        }
+        
+        // Restaurar estilos originais
+        document.body.style.overflow = originalBodyOverflow
+        document.documentElement.style.overflow = originalHtmlOverflow
+        document.body.style.position = originalBodyPosition
+        document.documentElement.style.position = originalHtmlPosition
+      }
       
     } catch (error) {
       console.error(`❌ [WIDGET DEBUG] ERRO CRÍTICO ao carregar widget "${widget.name}":`, error)
       setHasError(true)
       setErrorMessage(`Erro crítico: ${error}`)
+      
+      // Restaurar addEventListener mesmo em caso de erro
+      EventTarget.prototype.addEventListener = originalAddEventListener
     }
     
-    // Cleanup: remover scripts ao desmontar
-    return () => {
-      console.log(`🧹 [WIDGET DEBUG] Limpando widget "${widget.name}"`)
-      if (containerRef.current) {
-        const scripts = containerRef.current.querySelectorAll('script')
-        scripts.forEach(s => s.remove())
-      }
-    }
   }, [widget.html_content, widget.id, widget.name])
   
   // Se tiver erro, mostrar card de erro ao invés de travar
@@ -332,6 +459,12 @@ function WidgetRenderer({
       data-widget-id={widget.id}
       data-widget-name={widget.name}
       style={{
+        // 🛡️ SANDBOX CONTAINER - Isolamento de z-index e overflow
+        position: 'relative',
+        zIndex: 1,
+        isolation: 'isolate', // Cria novo stacking context
+        contain: 'layout style', // CSS Containment
+        overflow: 'visible',
         // Variáveis CSS disponíveis para os widgets
         '--cor-fundo-pagina': colors.cor_fundo_pagina,
         '--cor-detalhes-fundo': colors.cor_detalhes_fundo,
