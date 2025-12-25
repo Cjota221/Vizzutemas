@@ -534,28 +534,59 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
     // Adicionar classe de proteção no body
     document.body.classList.add('preview-mode')
     
+    // 🛡️ NUCLEAR: Injetar stylesheet que SOBRESCREVE TUDO
+    const nuclearStyle = document.createElement('style')
+    nuclearStyle.id = 'scroll-protection-nuclear'
+    nuclearStyle.textContent = `
+      html, body {
+        overflow: auto !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        position: static !important;
+        height: auto !important;
+        min-height: 100% !important;
+        max-height: none !important;
+        touch-action: auto !important;
+        overscroll-behavior: auto !important;
+      }
+      html.no-scroll, body.no-scroll,
+      html.modal-open, body.modal-open,
+      html.overflow-hidden, body.overflow-hidden {
+        overflow: auto !important;
+        overflow-y: auto !important;
+        position: static !important;
+      }
+    `
+    document.head.appendChild(nuclearStyle)
+    
     // Forçar scroll habilitado via JavaScript com intervalo
     const forceScrollInterval = setInterval(() => {
-      const bodyStyle = window.getComputedStyle(document.body)
-      const htmlStyle = window.getComputedStyle(document.documentElement)
+      // Remover classes problemáticas que widgets podem adicionar
+      document.body.classList.remove('no-scroll', 'modal-open', 'overflow-hidden', 'fixed')
+      document.documentElement.classList.remove('no-scroll', 'modal-open', 'overflow-hidden', 'fixed')
       
-      // Se detectar bloqueio, forçar desbloqueio
-      if (bodyStyle.overflowY === 'hidden' || htmlStyle.overflowY === 'hidden' ||
-          bodyStyle.overflow === 'hidden' || htmlStyle.overflow === 'hidden' ||
-          bodyStyle.overflow.includes('hidden')) {
-        document.body.style.setProperty('overflow-y', 'auto', 'important')
-        document.body.style.setProperty('overflow-x', 'hidden', 'important')
-        document.documentElement.style.setProperty('overflow-y', 'auto', 'important')
-        document.documentElement.style.setProperty('overflow-x', 'hidden', 'important')
-        document.body.style.setProperty('position', 'static', 'important')
-        document.documentElement.style.setProperty('position', 'static', 'important')
-        console.log('🛡️ [SCROLL PROTECTION] Scroll forçado!')
-      }
-    }, 500) // Verificar a cada 500ms
+      // Remover atributos inline de overflow
+      document.body.style.removeProperty('overflow')
+      document.documentElement.style.removeProperty('overflow')
+      
+      // Forçar overflow via setProperty
+      document.body.style.setProperty('overflow', 'auto', 'important')
+      document.body.style.setProperty('overflow-y', 'auto', 'important')
+      document.body.style.setProperty('overflow-x', 'hidden', 'important')
+      document.documentElement.style.setProperty('overflow', 'auto', 'important')
+      document.documentElement.style.setProperty('overflow-y', 'auto', 'important')
+      document.documentElement.style.setProperty('overflow-x', 'hidden', 'important')
+      
+      // Garantir position
+      document.body.style.setProperty('position', 'static', 'important')
+      document.documentElement.style.setProperty('position', 'static', 'important')
+    }, 100) // Verificar a cada 100ms (mais agressivo)
     
     return () => {
       clearInterval(forceScrollInterval)
       document.body.classList.remove('preview-mode')
+      const style = document.getElementById('scroll-protection-nuclear')
+      if (style) style.remove()
     }
   }, [])
 
