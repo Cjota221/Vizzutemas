@@ -392,6 +392,67 @@ function WidgetRenderer({
       setTimeout(forceScroll, 1000)
       
       // ========================================
+      // 🔴 REMOVER OVERLAYS E ELEMENTOS FIXED
+      // ========================================
+      const removeProblematicElements = () => {
+        // Remover elementos fixed que cobrem toda a tela
+        const allFixed = document.querySelectorAll('[style*="position: fixed"], [style*="position:fixed"]')
+        allFixed.forEach(el => {
+          const rect = el.getBoundingClientRect()
+          // Se o elemento fixed cobre grande parte da tela, removê-lo ou neutralizá-lo
+          if (rect.width > window.innerWidth * 0.8 && rect.height > window.innerHeight * 0.8) {
+            console.warn(`🔴 [SANDBOX] Removendo overlay fixed grande: ${el.tagName}.${el.className}`)
+            ;(el as HTMLElement).style.display = 'none'
+          }
+        })
+        
+        // Remover backdrops e overlays conhecidos
+        const overlaySelectors = [
+          '[class*="overlay"]',
+          '[class*="backdrop"]',
+          '[class*="modal-bg"]',
+          '[class*="loading"]',
+          '[id*="overlay"]',
+          '[id*="backdrop"]'
+        ]
+        
+        overlaySelectors.forEach(selector => {
+          document.querySelectorAll(selector).forEach(el => {
+            const style = window.getComputedStyle(el)
+            if (style.position === 'fixed' || style.position === 'absolute') {
+              const rect = el.getBoundingClientRect()
+              if (rect.width > window.innerWidth * 0.5 || rect.height > window.innerHeight * 0.5) {
+                console.warn(`🔴 [SANDBOX] Escondendo overlay: ${selector}`)
+                ;(el as HTMLElement).style.display = 'none'
+              }
+            }
+          })
+        })
+        
+        // Verificar elementos dentro do container do widget
+        if (containerRef.current) {
+          const fixedInWidget = containerRef.current.querySelectorAll('*')
+          fixedInWidget.forEach(el => {
+            const style = window.getComputedStyle(el)
+            if (style.position === 'fixed') {
+              console.warn(`🔴 [SANDBOX] Convertendo fixed para relative dentro do widget: ${el.tagName}`)
+              ;(el as HTMLElement).style.position = 'relative'
+              ;(el as HTMLElement).style.top = 'auto'
+              ;(el as HTMLElement).style.left = 'auto'
+              ;(el as HTMLElement).style.right = 'auto'
+              ;(el as HTMLElement).style.bottom = 'auto'
+              ;(el as HTMLElement).style.zIndex = '1'
+            }
+          })
+        }
+      }
+      
+      // Executar remoção de overlays após carregamento
+      setTimeout(removeProblematicElements, 200)
+      setTimeout(removeProblematicElements, 1000)
+      setTimeout(removeProblematicElements, 3000)
+      
+      // ========================================
       // 🧹 CLEANUP
       // ========================================
       return () => {
@@ -880,14 +941,42 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
 
                 {/* Widgets */}
                 {section.type === 'widgets' && widgets.length > 0 && (
-                  <div className="widgets-section w-full overflow-hidden">
-                    {/* CSS base para responsividade dos widgets */}
+                  <div className="widgets-section w-full" style={{ position: 'relative', zIndex: 1 }}>
+                    {/* CSS NUCLEAR para neutralizar widgets problemáticos */}
                     <style dangerouslySetInnerHTML={{ __html: `
+                      /* Forçar widgets a não quebrarem o layout */
+                      .widgets-section {
+                        position: relative !important;
+                        z-index: 1 !important;
+                        overflow: visible !important;
+                      }
                       .widgets-section .widget {
                         width: 100%;
                         max-width: 100%;
-                        overflow-x: hidden;
+                        overflow: visible !important;
                         box-sizing: border-box;
+                        position: relative !important;
+                        z-index: 1 !important;
+                      }
+                      /* NEUTRALIZAR position fixed/absolute que cobrem a tela */
+                      .widgets-section .widget [style*="position: fixed"],
+                      .widgets-section .widget [style*="position:fixed"],
+                      .widgets-section .widget div[style*="fixed"] {
+                        position: relative !important;
+                        top: auto !important;
+                        left: auto !important;
+                        right: auto !important;
+                        bottom: auto !important;
+                        width: auto !important;
+                        height: auto !important;
+                        z-index: 1 !important;
+                      }
+                      /* Neutralizar overlays/modals */
+                      .widgets-section .widget [style*="position: absolute"][style*="100%"],
+                      .widgets-section .widget [style*="position:absolute"][style*="100%"] {
+                        position: relative !important;
+                        width: auto !important;
+                        height: auto !important;
                       }
                       .widgets-section .widget * {
                         max-width: 100%;
@@ -896,6 +985,11 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                       .widgets-section .widget img {
                         max-width: 100%;
                         height: auto;
+                      }
+                      /* Esconder overlays invisíveis que bloqueiam cliques */
+                      .widgets-section .widget > div[style*="position: fixed"][style*="inset"],
+                      .widgets-section .widget > div[style*="position: fixed"][style*="top: 0"][style*="left: 0"] {
+                        display: none !important;
                       }
                       @media (max-width: 768px) {
                         .widgets-section .widget {
