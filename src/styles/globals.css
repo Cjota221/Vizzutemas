@@ -52,6 +52,35 @@
   --transition-normal: 150ms ease;
 }
 
+/* =====================================================
+   🛡️ WIDGET SANDBOX PROTECTION - Scroll Lock Prevention
+   Estas regras protegem contra widgets que tentam
+   bloquear o scroll da página
+   ===================================================== */
+
+/* Proteção global de scroll - preview pages */
+body.preview-mode,
+html:has(body.preview-mode) {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: static !important;
+  height: auto !important;
+  min-height: 100% !important;
+}
+
+/* Garantir que widgets não afetem o scroll global */
+.widgets-section {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+.widgets-section .widget {
+  overflow: visible !important;
+  position: relative !important;
+  isolation: isolate;
+  contain: layout style;
+}
+
 /* Base Styles */
 html, body, #__next {
   height: 100%;

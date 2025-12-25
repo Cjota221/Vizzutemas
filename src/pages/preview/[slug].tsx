@@ -529,6 +529,36 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
   // Prioridade: layoutConfig.logo_url > storeConfig.store_logo
   const logoUrl = (layoutConfig as any)?.logo_url || storeConfig?.store_logo || null
 
+  // 🛡️ PROTEÇÃO DE SCROLL - Adicionar classe e forçar scroll
+  useEffect(() => {
+    // Adicionar classe de proteção no body
+    document.body.classList.add('preview-mode')
+    
+    // Forçar scroll habilitado via JavaScript com intervalo
+    const forceScrollInterval = setInterval(() => {
+      const bodyStyle = window.getComputedStyle(document.body)
+      const htmlStyle = window.getComputedStyle(document.documentElement)
+      
+      // Se detectar bloqueio, forçar desbloqueio
+      if (bodyStyle.overflowY === 'hidden' || htmlStyle.overflowY === 'hidden' ||
+          bodyStyle.overflow === 'hidden' || htmlStyle.overflow === 'hidden' ||
+          bodyStyle.overflow.includes('hidden')) {
+        document.body.style.setProperty('overflow-y', 'auto', 'important')
+        document.body.style.setProperty('overflow-x', 'hidden', 'important')
+        document.documentElement.style.setProperty('overflow-y', 'auto', 'important')
+        document.documentElement.style.setProperty('overflow-x', 'hidden', 'important')
+        document.body.style.setProperty('position', 'static', 'important')
+        document.documentElement.style.setProperty('position', 'static', 'important')
+        console.log('🛡️ [SCROLL PROTECTION] Scroll forçado!')
+      }
+    }, 500) // Verificar a cada 500ms
+    
+    return () => {
+      clearInterval(forceScrollInterval)
+      document.body.classList.remove('preview-mode')
+    }
+  }, [])
+
   // Detector de scroll bloqueado
   useEffect(() => {
     if (widgetsDisabled) return
