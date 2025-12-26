@@ -101,25 +101,43 @@ export async function updateTheme(id: string, payload: Partial<Theme>): Promise<
 // FUNÇÕES PARA CSS DO TEMA
 // =============================================
 
-// Busca CSS de uma página específica (ou global se page_type não existir)
+// Busca CSS de uma página específica
 export async function getCssByPage(theme_id: string, page_type: PageType): Promise<ThemeCSS | null> {
-  // Tenta buscar por page_type primeiro
+  console.log(`[CSS] Buscando CSS para tema ${theme_id}, página ${page_type}`)
+  
+  // Tenta buscar por theme_id E page_type
   const { data, error } = await supabase
     .from('theme_css')
     .select('*')
     .eq('theme_id', theme_id)
+    .eq('page_type', page_type)
     .limit(1)
     .single()
   
   if (error && error.code !== 'PGRST116') { // Ignora erro de não encontrado
-    // Se der erro de coluna não existir, retorna null
+    // Se der erro de coluna não existir, tenta buscar sem page_type
     if (error.code === '42703') {
-      console.log('Coluna page_type não existe, usando CSS global')
+      console.log('[CSS] Coluna page_type não existe, tentando buscar CSS global')
+      const { data: globalData, error: globalError } = await supabase
+        .from('theme_css')
+        .select('*')
+        .eq('theme_id', theme_id)
+        .limit(1)
+        .single()
+      
+      if (globalError && globalError.code !== 'PGRST116') {
+        console.error('[CSS] Erro ao buscar CSS global:', globalError)
+        return null
+      }
+      console.log(`[CSS] CSS global encontrado: ${globalData?.css_code?.length || 0} chars`)
+      return globalData as ThemeCSS | null
     } else {
-      console.error('Erro ao buscar CSS da página:', error)
+      console.error('[CSS] Erro ao buscar CSS da página:', error)
     }
     return null
   }
+  
+  console.log(`[CSS] CSS encontrado para página ${page_type}: ${data?.css_code?.length || 0} chars`)
   return data as ThemeCSS | null
 }
 
