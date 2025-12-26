@@ -396,7 +396,8 @@ html, body {
 
 /* ========================================
    🛡️ ISOLAMENTO DE WIDGETS
-   Cada widget é isolado para evitar sobreposição
+   CRÍTICO: Widgets foram feitos para iframes separados
+   Aqui forçamos cada um a ser contido em seu bloco
    ======================================== */
 
 /* Container de widgets em flex column */
@@ -406,38 +407,211 @@ html, body {
   gap: 0 !important;
   width: 100% !important;
   position: relative !important;
-}
-
-/* Cada widget é um bloco isolado */
-.widget {
-  position: relative !important;
-  isolation: isolate !important;
-  transform: translateZ(0) !important;
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
   z-index: 1 !important;
 }
 
-/* Elementos absolutos dentro de widgets ficam contidos */
-.widget [style*="position: absolute"],
-.widget [style*="position:absolute"] {
-  position: absolute !important;
-  z-index: auto !important;
+/* ===========================================
+   CADA WIDGET É UM BLOCO ISOLADO
+   =========================================== */
+.widget {
+  position: relative !important;
+  isolation: isolate !important;
+  contain: layout style !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  z-index: 1 !important;
+  /* Importante: Widget define seu próprio contexto de posicionamento */
+  transform: translateZ(0) !important;
 }
 
-/* Limitar z-index dentro de widgets */
+/* ===========================================
+   FORÇAR ALTURA AUTOMÁTICA EM CONTAINERS
+   Widgets usam height:100vh que precisamos anular
+   =========================================== */
+.widget > div,
+.widget > section,
+.widget > article {
+  position: relative !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+}
+
+/* Containers com position absolute precisam ser relativos ao widget */
+.widget [style*="position: absolute"],
+.widget [style*="position:absolute"] {
+  /* Mantém absolute mas contido no widget pai */
+}
+
+/* Anular position fixed - muito perigoso */
+.widget [style*="position: fixed"],
+.widget [style*="position:fixed"] {
+  position: absolute !important;
+}
+
+/* ===========================================
+   RESETAR Z-INDEX DENTRO DE WIDGETS
+   Evita que widgets se sobreponham
+   =========================================== */
 .widget * {
   z-index: auto !important;
 }
 
-/* Exceção: modals e overlays podem ter z-index alto, mas dentro do widget */
+/* Exceções para elementos que precisam de z-index */
+.widget .swiper-button-next,
+.widget .swiper-button-prev,
+.widget .swiper-pagination,
+.widget [class*="nav"],
+.widget [class*="arrow"],
+.widget [class*="btn"],
+.widget button {
+  z-index: 10 !important;
+}
+
+/* Modals e overlays podem ter z-index alto */
 .widget [class*="modal"],
 .widget [class*="overlay"],
 .widget [class*="popup"],
 .widget [class*="dropdown"] {
   z-index: 100 !important;
+}
+
+/* ===========================================
+   TRADUÇÃO DAS CLASSES DE PLATAFORMA
+   Os widgets usam classes de Frainer/Nuvemshop
+   Aqui traduzimos para nosso sistema
+   =========================================== */
+
+/* RESET: Anular regras que assumem que widget é a página inteira */
+.widget body,
+.widget html {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+/* TRADUÇÃO: Classes de plataforma viram relativas ao widget */
+.widget .fz-html-personalizado,
+.widget .html-content-iframe,
+.widget iframe.html-content-iframe {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 1 !important;
+}
+
+/* ===========================================
+   CLASSES ESPECÍFICAS DOS WIDGETS VIVAZ
+   Cada seção de widget deve ser um bloco contido
+   =========================================== */
+
+/* Estrutura genérica: qualquer section vivaz */
+.widget [class*="vivaz-"][class*="-section"] {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  overflow: hidden !important;
+}
+
+/* CATEGORIAS */
+.widget .vivaz-cat-section {
+  position: relative !important;
+  min-height: 80px !important;
+}
+
+/* BARRA DE VANTAGENS - altura fixa de 60px */
+.widget .vivaz-trust-section {
+  position: relative !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  max-height: 60px !important;
+  overflow: hidden !important;
+}
+
+/* VIDEO PROVADOR */
+.widget .vivaz-single-video-section,
+.widget .vivaz-video-section {
+  position: relative !important;
+  min-height: 300px !important;
+}
+
+/* CARROSSEL DE BANNERS */
+.widget .vivaz-banner-section {
+  position: relative !important;
+  min-height: 200px !important;
+}
+
+.widget .vivaz-banner-section .swiper-slide {
+  height: 300px !important;
+}
+
+@media (min-width: 769px) {
+  .widget .vivaz-banner-section .swiper-slide {
+    height: 400px !important;
+  }
+}
+
+/* COMPRE POR TAMANHO */
+.widget .vivaz-size-section {
+  position: relative !important;
+  min-height: 200px !important;
+}
+
+/* FAIXA DE CUPOM - altura fixa 48px */
+.widget .vivaz-marquee-section {
+  position: relative !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  overflow: hidden !important;
+}
+
+/* CARROSSEL DE VIDEOS/REELS */
+.widget .vivaz-reels-section {
+  position: relative !important;
+  min-height: 400px !important;
+}
+
+/* FEEDBACKS */
+.widget .vivaz-social-section {
+  position: relative !important;
+  min-height: 250px !important;
+}
+
+/* ===========================================
+   ELEMENTOS INTERNOS DOS WIDGETS
+   =========================================== */
+
+/* Containers internos */
+.widget [class*="vivaz-container"],
+.widget [class*="vivaz-"][class*="-container"] {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+}
+
+/* Overlays de banner ficam contidos */
+.widget .vivaz-banner-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Elementos de vídeo */
+.widget .vivaz-video-element {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 500px !important;
+  object-fit: cover !important;
 }
 
 /* Widgets devem respeitar container */
