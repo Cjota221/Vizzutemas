@@ -520,102 +520,287 @@ export default function EditThemePage() {
 
   return (
     <AdminLayout title={`Editando: ${theme.name}`}>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
-        <div className="flex items-center gap-3">
-          <Link href="/admin/themes" className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900">{theme.name}</h1>
-            <p className="text-xs text-slate-400">/{theme.slug}</p>
+      {/* Header Moderno */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 px-4 sm:px-6 lg:px-8 py-8 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/admin/themes" 
+              className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-white">{theme.name}</h1>
+              <p className="text-sm text-slate-400 flex items-center gap-2 mt-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                /{theme.slug}
+              </p>
+            </div>
           </div>
+          <a 
+            href={`/preview/${theme.slug}`} 
+            target="_blank" 
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 rounded-xl hover:bg-slate-100 transition-colors text-sm font-semibold shadow-lg"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Preview
+          </a>
         </div>
-        <a 
-          href={`/preview/${theme.slug}`} 
-          target="_blank" 
-          className="inline-flex items-center gap-2 px-3 py-1.5 border border-slate-200 text-slate-600 rounded-md hover:bg-slate-50 hover:border-slate-300 transition-colors text-sm"
-        >
-          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          Preview
-        </a>
       </div>
 
       {/* Mensagem de feedback */}
       {message && (
-        <div className={`mb-4 px-3 py-2 rounded-md text-sm ${
+        <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-medium flex items-center gap-3 ${
           message.type === 'success' 
             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
             : 'bg-red-50 text-red-700 border border-red-200'
         }`}>
+          {message.type === 'success' ? (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
           {message.text}
         </div>
       )}
 
-      {/* Tabs - Underline style */}
-      <div className="flex gap-6 mb-6 overflow-x-auto border-b border-slate-200">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`pb-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
-              activeTab === tab.id 
-                ? 'text-slate-900 border-slate-900' 
-                : 'text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Tabs Modernas com Ícones */}
+      <div className="flex gap-2 mb-8 overflow-x-auto pb-2 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        {tabs.map(tab => {
+          const icons: Record<TabType, React.ReactNode> = {
+            info: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+            layout: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>,
+            cores: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>,
+            produtos: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>,
+            banners: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+            widgets: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" /></svg>,
+            css: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+          }
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                activeTab === tab.id 
+                  ? 'bg-slate-900 text-white shadow-lg' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+              }`}
+            >
+              {icons[tab.id]}
+              {tab.label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Content */}
       <div className="space-y-6">
         {activeTab === 'info' && (
-          <Card>
-            <h2 className="text-sm font-semibold text-slate-900 mb-4 pb-3 border-b border-slate-100 uppercase tracking-wide">Informações do Tema</h2>
-            <div className="space-y-4 max-w-xl">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">Nome do Tema</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">Slug (URL)</label>
-                <input type="text" value={slug} onChange={e => setSlug(e.target.value)} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">Descrição</label>
-                <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">Preço (R$)</label>
-                  <input type="number" value={price} onChange={e => setPrice(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Coluna Principal - Informações */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <div className="p-6">
+                  <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <span className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </span>
+                    Informações do Tema
+                  </h2>
+                  
+                  <div className="space-y-5">
+                    {/* Nome do Tema */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Nome do Tema</label>
+                      <input 
+                        type="text" 
+                        value={name} 
+                        onChange={e => setName(e.target.value)} 
+                        className="w-full px-4 py-3 text-base bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all" 
+                        placeholder="Ex: Tema Elegance"
+                      />
+                    </div>
+                    
+                    {/* Slug */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Slug (URL)</label>
+                      <div className="flex items-center">
+                        <span className="px-4 py-3 bg-slate-100 border-2 border-r-0 border-slate-200 rounded-l-xl text-slate-500 text-sm">/preview/</span>
+                        <input 
+                          type="text" 
+                          value={slug} 
+                          onChange={e => setSlug(e.target.value)} 
+                          className="flex-1 px-4 py-3 text-base bg-slate-50 border-2 border-slate-200 rounded-r-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all" 
+                          placeholder="meu-tema"
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Descrição */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">Descrição</label>
+                      <textarea 
+                        value={description} 
+                        onChange={e => setDescription(e.target.value)} 
+                        rows={4} 
+                        className="w-full px-4 py-3 text-base bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all resize-none" 
+                        placeholder="Descreva seu tema..."
+                      />
+                    </div>
+                    
+                    {/* Preço e Status */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Preço (R$)</label>
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">R$</span>
+                          <input 
+                            type="number" 
+                            value={price} 
+                            onChange={e => setPrice(e.target.value)} 
+                            step="0.01" 
+                            min="0" 
+                            className="w-full pl-12 pr-4 py-3 text-base bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all" 
+                            placeholder="0,00"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">Status</label>
+                        <select 
+                          value={status} 
+                          onChange={e => setStatus(e.target.value as any)} 
+                          className="w-full px-4 py-3 text-base bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all appearance-none cursor-pointer"
+                        >
+                          <option value="draft">📝 Rascunho</option>
+                          <option value="published">✅ Publicado</option>
+                          <option value="archived">📦 Arquivado</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">Status</label>
-                  <select value={status} onChange={e => setStatus(e.target.value as any)} className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400">
-                    <option value="draft">Rascunho</option>
-                    <option value="published">Publicado</option>
-                    <option value="archived">Arquivado</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1.5 uppercase tracking-wide">URL da Thumbnail</label>
-                <input type="url" value={thumbnail} onChange={e => setThumbnail(e.target.value)} placeholder="https://..." className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-md focus:ring-2 focus:ring-slate-200 focus:border-slate-400" />
-                {thumbnail && <img src={thumbnail} alt="Preview" className="mt-2 h-20 rounded-md object-cover border border-slate-200" />}
-              </div>
-              <button onClick={handleSaveInfo} disabled={saving} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-md transition disabled:opacity-50">
-                {saving ? 'Salvando...' : 'Salvar Informações'}
+              </Card>
+              
+              {/* Botão Salvar */}
+              <button 
+                onClick={handleSaveInfo} 
+                disabled={saving} 
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-base font-semibold rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 flex items-center justify-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Salvar Informações
+                  </>
+                )}
               </button>
             </div>
-          </Card>
+            
+            {/* Coluna Lateral - Thumbnail */}
+            <div className="space-y-6">
+              <Card>
+                <div className="p-6">
+                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <span className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </span>
+                    Thumbnail
+                  </h3>
+                  
+                  {/* Preview da Thumbnail */}
+                  <div className="mb-4">
+                    {thumbnail ? (
+                      <div className="relative group">
+                        <img 
+                          src={thumbnail} 
+                          alt="Preview" 
+                          className="w-full aspect-video rounded-xl object-cover border-2 border-slate-200 shadow-sm" 
+                        />
+                        <button 
+                          onClick={() => setThumbnail('')}
+                          className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-full aspect-video rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center text-slate-400">
+                        <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-sm">Sem imagem</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Input URL */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 mb-2">URL da Imagem</label>
+                    <input 
+                      type="url" 
+                      value={thumbnail} 
+                      onChange={e => setThumbnail(e.target.value)} 
+                      placeholder="https://exemplo.com/imagem.jpg" 
+                      className="w-full px-4 py-3 text-sm bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-purple-100 focus:border-purple-500 transition-all" 
+                    />
+                  </div>
+                </div>
+              </Card>
+              
+              {/* Card de Dicas */}
+              <Card>
+                <div className="p-6 bg-gradient-to-br from-amber-50 to-orange-50">
+                  <h3 className="text-base font-bold text-amber-800 mb-3 flex items-center gap-2">
+                    <span className="text-xl">💡</span>
+                    Dicas
+                  </h3>
+                  <ul className="space-y-2 text-sm text-amber-700">
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-500 mt-0.5">•</span>
+                      Use um slug curto e sem espaços
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-500 mt-0.5">•</span>
+                      A thumbnail aparece na listagem de temas
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-amber-500 mt-0.5">•</span>
+                      Publique o tema quando estiver pronto
+                    </li>
+                  </ul>
+                </div>
+              </Card>
+            </div>
+          </div>
         )}
 
         {/* Layout Tab - Completamente Reformulado */}
