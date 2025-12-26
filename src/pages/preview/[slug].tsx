@@ -202,10 +202,12 @@ type Props = {
 // ========================================
 function WidgetRenderer({ 
   widget, 
-  colors 
+  colors,
+  isMobile = false
 }: { 
   widget: ThemeWidget
-  colors: ColorConfig 
+  colors: ColorConfig
+  isMobile?: boolean
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [hasError, setHasError] = useState(false)
@@ -240,6 +242,42 @@ function WidgetRenderer({
       })
       
       console.log(`✅ [WIDGET] "${widget.name}" carregado`)
+      
+      // 🎬 AUTOPLAY VÍDEOS - Após carregar widget
+      setTimeout(() => {
+        if (!containerRef.current) return
+        
+        // Encontrar todos os vídeos e dar play
+        const videos = containerRef.current.querySelectorAll('video')
+        videos.forEach((video, index) => {
+          // Adicionar atributos para autoplay
+          video.setAttribute('autoplay', '')
+          video.setAttribute('playsinline', '')
+          video.setAttribute('muted', '')
+          video.muted = true // Necessário para autoplay funcionar
+          video.loop = true
+          
+          // Tentar dar play
+          video.play().then(() => {
+            console.log(`🎬 [WIDGET] Vídeo ${index + 1} do "${widget.name}" iniciado`)
+          }).catch(err => {
+            console.warn(`⚠️ [WIDGET] Vídeo ${index + 1} não conseguiu autoplay:`, err)
+          })
+        })
+        
+        // Encontrar iframes de vídeo e adicionar autoplay na URL
+        const iframes = containerRef.current.querySelectorAll('iframe')
+        iframes.forEach(iframe => {
+          const src = iframe.getAttribute('src') || ''
+          if (src.includes('youtube') || src.includes('vimeo')) {
+            // Adicionar autoplay à URL se não tiver
+            if (!src.includes('autoplay')) {
+              const separator = src.includes('?') ? '&' : '?'
+              iframe.setAttribute('src', src + separator + 'autoplay=1&mute=1')
+            }
+          }
+        })
+      }, 500)
       
       // 🛡️ PROTEÇÃO: Forçar scroll a cada 500ms por 5 segundos
       let count = 0
@@ -287,6 +325,9 @@ function WidgetRenderer({
       style={{
         position: 'relative',
         zIndex: 1,
+        width: '100%',
+        maxWidth: '100%',
+        overflow: 'visible',
         '--cor-fundo-pagina': colors.cor_fundo_pagina,
         '--cor-detalhes-fundo': colors.cor_detalhes_fundo,
         '--cor-fundo-barra-superior': colors.cor_fundo_barra_superior,
@@ -549,10 +590,77 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
       </div>
 
       {/* Container do Preview */}
-      <div className={`mx-auto transition-all duration-300 ${isMobile ? 'max-w-[375px] shadow-2xl my-4 rounded-3xl overflow-hidden border-8 border-gray-800' : ''}`}>
+      <div 
+        className={`mx-auto transition-all duration-300 ${isMobile ? 'max-w-[375px] shadow-2xl my-4 rounded-3xl overflow-hidden border-8 border-gray-800' : ''}`}
+        style={{
+          // Simular viewport mobile para os widgets
+          ...(isMobile ? {
+            width: '375px',
+            minWidth: '375px',
+            maxWidth: '375px',
+          } : {})
+        }}
+      >
+        
+        {/* Injetar CSS para simular viewport mobile */}
+        {isMobile && (
+          <style dangerouslySetInnerHTML={{ __html: `
+            /* SIMULAR VIEWPORT MOBILE - Fazer widgets pensarem que estão em tela pequena */
+            .mobile-viewport-simulator {
+              width: 375px !important;
+              max-width: 375px !important;
+              overflow-x: hidden !important;
+            }
+            .mobile-viewport-simulator * {
+              max-width: 100% !important;
+            }
+            .mobile-viewport-simulator img,
+            .mobile-viewport-simulator video,
+            .mobile-viewport-simulator iframe {
+              max-width: 100% !important;
+              height: auto !important;
+            }
+            /* Forçar media queries mobile */
+            .mobile-viewport-simulator .widget {
+              --viewport-width: 375px;
+            }
+            /* Esconder elementos que aparecem só em desktop */
+            .mobile-viewport-simulator [class*="hidden-mobile"],
+            .mobile-viewport-simulator [class*="desktop-only"],
+            .mobile-viewport-simulator [class*="d-none-mobile"],
+            .mobile-viewport-simulator [class*="hide-on-mobile"] {
+              display: none !important;
+            }
+            /* Mostrar elementos mobile */
+            .mobile-viewport-simulator [class*="mobile-only"],
+            .mobile-viewport-simulator [class*="show-on-mobile"],
+            .mobile-viewport-simulator [class*="d-block-mobile"] {
+              display: block !important;
+            }
+            /* Forçar flex-wrap em containers */
+            .mobile-viewport-simulator [style*="display: flex"],
+            .mobile-viewport-simulator [style*="display:flex"],
+            .mobile-viewport-simulator .flex {
+              flex-wrap: wrap !important;
+            }
+            /* Carrosséis horizontais */
+            .mobile-viewport-simulator [style*="overflow-x"],
+            .mobile-viewport-simulator [style*="overflow: auto"],
+            .mobile-viewport-simulator .swiper,
+            .mobile-viewport-simulator .splide,
+            .mobile-viewport-simulator .slick-slider,
+            .mobile-viewport-simulator .carousel {
+              max-width: 375px !important;
+              overflow-x: auto !important;
+            }
+          `}} />
+        )}
         
         {/* Preview da Loja */}
-        <div style={{ backgroundColor: colors.cor_fundo_pagina }} className="min-h-screen">
+        <div 
+          style={{ backgroundColor: colors.cor_fundo_pagina }} 
+          className={`min-h-screen ${isMobile ? 'mobile-viewport-simulator' : ''}`}
+        >
           
           {/* Barra Superior */}
           <div 
@@ -701,23 +809,53 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                 {/* Widgets */}
                 {section.type === 'widgets' && widgets.length > 0 && (
                   <div className="widgets-section w-full" style={{ position: 'relative', zIndex: 1 }}>
-                    {/* CSS NUCLEAR para neutralizar widgets problemáticos */}
+                    {/* CSS NUCLEAR para garantir widgets responsivos e funcionais */}
                     <style dangerouslySetInnerHTML={{ __html: `
-                      /* Forçar widgets a não quebrarem o layout */
+                      /* ========================================
+                         🎯 WIDGETS - LAYOUT E RESPONSIVIDADE
+                         ======================================== */
                       .widgets-section {
                         position: relative !important;
                         z-index: 1 !important;
                         overflow: visible !important;
+                        width: 100% !important;
                       }
+                      
                       .widgets-section .widget {
-                        width: 100%;
-                        max-width: 100%;
+                        width: 100% !important;
+                        max-width: 100% !important;
                         overflow: visible !important;
-                        box-sizing: border-box;
+                        box-sizing: border-box !important;
                         position: relative !important;
                         z-index: 1 !important;
+                        margin-bottom: 0 !important;
                       }
-                      /* NEUTRALIZAR position fixed/absolute que cobrem a tela */
+                      
+                      /* Garantir que elementos internos não quebrem */
+                      .widgets-section .widget * {
+                        max-width: 100% !important;
+                        box-sizing: border-box !important;
+                      }
+                      
+                      .widgets-section .widget img {
+                        max-width: 100% !important;
+                        height: auto !important;
+                        object-fit: contain !important;
+                      }
+                      
+                      .widgets-section .widget video {
+                        max-width: 100% !important;
+                        height: auto !important;
+                      }
+                      
+                      .widgets-section .widget iframe {
+                        max-width: 100% !important;
+                      }
+                      
+                      /* ========================================
+                         🔧 NEUTRALIZAR ELEMENTOS PROBLEMÁTICOS
+                         ======================================== */
+                      /* Converter position fixed para relative */
                       .widgets-section .widget [style*="position: fixed"],
                       .widgets-section .widget [style*="position:fixed"],
                       .widgets-section .widget div[style*="fixed"] {
@@ -726,39 +864,89 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                         left: auto !important;
                         right: auto !important;
                         bottom: auto !important;
-                        width: auto !important;
+                        width: 100% !important;
                         height: auto !important;
                         z-index: 1 !important;
                       }
-                      /* Neutralizar overlays/modals */
-                      .widgets-section .widget [style*="position: absolute"][style*="100%"],
-                      .widgets-section .widget [style*="position:absolute"][style*="100%"] {
-                        position: relative !important;
-                        width: auto !important;
-                        height: auto !important;
-                      }
-                      .widgets-section .widget * {
-                        max-width: 100%;
-                        box-sizing: border-box;
-                      }
-                      .widgets-section .widget img {
-                        max-width: 100%;
-                        height: auto;
-                      }
-                      /* Esconder overlays invisíveis que bloqueiam cliques */
+                      
+                      /* Neutralizar overlays */
                       .widgets-section .widget > div[style*="position: fixed"][style*="inset"],
-                      .widgets-section .widget > div[style*="position: fixed"][style*="top: 0"][style*="left: 0"] {
+                      .widgets-section .widget > div[style*="position: fixed"][style*="top: 0"][style*="left: 0"],
+                      .widgets-section .widget > div[style*="position:fixed"][style*="top:0"][style*="left:0"] {
                         display: none !important;
                       }
+                      
+                      /* ========================================
+                         📱 RESPONSIVIDADE MOBILE
+                         ======================================== */
                       @media (max-width: 768px) {
                         .widgets-section .widget {
-                          padding-left: 8px;
-                          padding-right: 8px;
+                          padding-left: 0 !important;
+                          padding-right: 0 !important;
                         }
+                        
+                        /* Forçar flex-wrap */
                         .widgets-section .widget [style*="display: flex"],
-                        .widgets-section .widget [style*="display:flex"] {
+                        .widgets-section .widget [style*="display:flex"],
+                        .widgets-section .widget .flex {
                           flex-wrap: wrap !important;
                         }
+                        
+                        /* Itens flex ocupam largura total */
+                        .widgets-section .widget [style*="display: flex"] > *,
+                        .widgets-section .widget [style*="display:flex"] > *,
+                        .widgets-section .widget .flex > * {
+                          flex: 0 0 100% !important;
+                          max-width: 100% !important;
+                        }
+                        
+                        /* Grid responsivo */
+                        .widgets-section .widget [style*="display: grid"],
+                        .widgets-section .widget [style*="display:grid"],
+                        .widgets-section .widget .grid {
+                          grid-template-columns: 1fr !important;
+                        }
+                        
+                        /* Carrosséis */
+                        .widgets-section .widget .swiper-wrapper,
+                        .widgets-section .widget .splide__list,
+                        .widgets-section .widget .slick-track {
+                          display: flex !important;
+                          flex-wrap: nowrap !important;
+                        }
+                      }
+                      
+                      /* Quando está no simulador mobile */
+                      .mobile-viewport-simulator .widgets-section .widget {
+                        padding-left: 0 !important;
+                        padding-right: 0 !important;
+                      }
+                      
+                      .mobile-viewport-simulator .widgets-section .widget [style*="display: flex"],
+                      .mobile-viewport-simulator .widgets-section .widget [style*="display:flex"] {
+                        flex-wrap: wrap !important;
+                      }
+                      
+                      .mobile-viewport-simulator .widgets-section .widget [style*="display: grid"],
+                      .mobile-viewport-simulator .widgets-section .widget [style*="display:grid"] {
+                        grid-template-columns: 1fr !important;
+                      }
+                      
+                      /* ========================================
+                         🎬 VÍDEOS - AUTOPLAY E DISPLAY
+                         ======================================== */
+                      .widgets-section .widget video {
+                        display: block !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                      }
+                      
+                      .widgets-section .widget iframe[src*="youtube"],
+                      .widgets-section .widget iframe[src*="vimeo"],
+                      .widgets-section .widget iframe[src*="player"] {
+                        width: 100% !important;
+                        aspect-ratio: 16/9 !important;
+                        height: auto !important;
                       }
                     `}} />
                     
@@ -789,7 +977,7 @@ export default function PreviewPage({ theme, products, banners, widgets, colors,
                         return filteredWidgets
                           .sort((a, b) => a.display_order - b.display_order)
                           .map(widget => (
-                            <WidgetRenderer key={widget.id} widget={widget} colors={colors} />
+                            <WidgetRenderer key={widget.id} widget={widget} colors={colors} isMobile={isMobile} />
                           ))
                       })()
                     )}
