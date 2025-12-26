@@ -214,6 +214,102 @@ function WidgetRenderer({
     console.log(`🔧 [WIDGET DEBUG] Carregando widget: "${widget.name}" (ID: ${widget.id})`)
     
     // ========================================
+    // 🛡️🛡️🛡️ PROTEÇÃO NÍVEL 1: INTERCEPTAR style.overflow
+    // ========================================
+    // Propriedades CSS bloqueadas
+    const blockedCssProps = ['overflow', 'overflowY', 'overflowX', 'position', 'height', 'maxHeight']
+    
+    // Salvar setters originais
+    const originalBodyStyleDescriptor = Object.getOwnPropertyDescriptor(document.body, 'style')
+    const originalHtmlStyleDescriptor = Object.getOwnPropertyDescriptor(document.documentElement, 'style')
+    
+    // Criar proxy para interceptar alterações de estilo
+    const createStyleProxy = (element: HTMLElement, elementName: string) => {
+      const originalStyle = element.style
+      
+      // Sobrescrever setProperty
+      const originalSetProperty = originalStyle.setProperty.bind(originalStyle)
+      originalStyle.setProperty = function(property: string, value: string, priority?: string) {
+        if (blockedCssProps.some(prop => property.toLowerCase().includes(prop.toLowerCase()))) {
+          console.warn(`🚫 [STYLE BLOCK] Widget "${widget.name}" tentou setar ${elementName}.style.setProperty('${property}', '${value}') - BLOQUEADO`)
+          return
+        }
+        return originalSetProperty(property, value, priority || '')
+      }
+      
+      // Criar proxy para propriedades diretas (style.overflow = 'hidden')
+      return new Proxy(originalStyle, {
+        set(target, prop, value) {
+          const propStr = String(prop)
+          if (blockedCssProps.some(blocked => propStr.toLowerCase().includes(blocked.toLowerCase()))) {
+            console.warn(`🚫 [STYLE BLOCK] Widget "${widget.name}" tentou setar ${elementName}.style.${propStr} = '${value}' - BLOQUEADO`)
+            return true // Retornar true indica "sucesso" mas não faz nada
+          }
+          // @ts-ignore
+          target[prop] = value
+          return true
+        },
+        get(target, prop) {
+          // @ts-ignore
+          return target[prop]
+        }
+      })
+    }
+    
+    // Aplicar proxies no body e html
+    const bodyStyleProxy = createStyleProxy(document.body, 'body')
+    const htmlStyleProxy = createStyleProxy(document.documentElement, 'html')
+    
+    // Substituir style por proxy (isso é hacky mas funciona)
+    try {
+      Object.defineProperty(document.body, 'style', {
+        get: () => bodyStyleProxy,
+        configurable: true
+      })
+      Object.defineProperty(document.documentElement, 'style', {
+        get: () => htmlStyleProxy,
+        configurable: true
+      })
+      console.log(`🛡️ [STYLE PROXY] Proxies de estilo instalados para widget "${widget.name}"`)
+    } catch (e) {
+      console.warn(`⚠️ [STYLE PROXY] Não foi possível instalar proxy:`, e)
+    }
+    
+    // ========================================
+    // 🛡️🛡️🛡️ PROTEÇÃO NÍVEL 2: INTERCEPTAR classList.add
+    // ========================================
+    const blockedClasses = ['no-scroll', 'modal-open', 'overflow-hidden', 'fixed', 'lock-scroll', 'body-lock']
+    
+    const originalBodyClassListAdd = document.body.classList.add.bind(document.body.classList)
+    const originalHtmlClassListAdd = document.documentElement.classList.add.bind(document.documentElement.classList)
+    
+    document.body.classList.add = function(...classes: string[]) {
+      const safeClasses = classes.filter(c => {
+        const isBlocked = blockedClasses.some(blocked => c.toLowerCase().includes(blocked.toLowerCase()))
+        if (isBlocked) {
+          console.warn(`🚫 [CLASS BLOCK] Widget "${widget.name}" tentou adicionar body.classList.add('${c}') - BLOQUEADO`)
+        }
+        return !isBlocked
+      })
+      if (safeClasses.length > 0) {
+        originalBodyClassListAdd(...safeClasses)
+      }
+    }
+    
+    document.documentElement.classList.add = function(...classes: string[]) {
+      const safeClasses = classes.filter(c => {
+        const isBlocked = blockedClasses.some(blocked => c.toLowerCase().includes(blocked.toLowerCase()))
+        if (isBlocked) {
+          console.warn(`🚫 [CLASS BLOCK] Widget "${widget.name}" tentou adicionar html.classList.add('${c}') - BLOQUEADO`)
+        }
+        return !isBlocked
+      })
+      if (safeClasses.length > 0) {
+        originalHtmlClassListAdd(...safeClasses)
+      }
+    }
+    
+    // ========================================
     // 🛡️ SANDBOX SETUP - Salvar estado original
     // ========================================
     const originalBodyOverflow = document.body.style.overflow
@@ -497,6 +593,22 @@ function WidgetRenderer({
         // Restaurar addEventListener original
         EventTarget.prototype.addEventListener = originalAddEventListener
         
+        // Restaurar classList.add originais
+        document.body.classList.add = originalBodyClassListAdd
+        document.documentElement.classList.add = originalHtmlClassListAdd
+        
+        // Restaurar style descriptors originais
+        try {
+          if (originalBodyStyleDescriptor) {
+            Object.defineProperty(document.body, 'style', originalBodyStyleDescriptor)
+          }
+          if (originalHtmlStyleDescriptor) {
+            Object.defineProperty(document.documentElement, 'style', originalHtmlStyleDescriptor)
+          }
+        } catch (e) {
+          console.warn(`⚠️ [CLEANUP] Erro ao restaurar style descriptors:`, e)
+        }
+        
         // Desconectar observer
         observer.disconnect()
         
@@ -520,6 +632,10 @@ function WidgetRenderer({
       
       // Restaurar addEventListener mesmo em caso de erro
       EventTarget.prototype.addEventListener = originalAddEventListener
+      
+      // Restaurar classList.add em caso de erro também
+      document.body.classList.add = originalBodyClassListAdd
+      document.documentElement.classList.add = originalHtmlClassListAdd
     }
     
   }, [widget.html_content, widget.id, widget.name])
