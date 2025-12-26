@@ -920,18 +920,11 @@ export default function EditThemePage() {
                             Categoria: {(section as any).category}
                           </span>
                         )}
-                        {/* Mostrar nomes dos widgets individualmente */}
+                        {/* Badge para widgets individuais */}
                         {section.type === 'widgets' && (section as any).widget_ids && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {(section as any).widget_ids.map((widgetId: string) => {
-                              const widget = widgets.find(w => w.id === widgetId)
-                              return widget ? (
-                                <span key={widgetId} className="text-xs text-yellow-700 px-2 py-0.5 bg-yellow-100 rounded-full">
-                                  {widget.name}
-                                </span>
-                              ) : null
-                            })}
-                          </div>
+                          <span className="ml-2 text-xs text-yellow-700 px-2 py-0.5 bg-yellow-100 rounded-full">
+                            🧩 Widget HTML
+                          </span>
                         )}
                       </div>
                       
@@ -1070,29 +1063,26 @@ export default function EditThemePage() {
                         <button
                           onClick={() => {
                             if (selectedLayoutWidgets.length > 0) {
-                              // Criar label com os nomes dos widgets
-                              const widgetNames = selectedLayoutWidgets
-                                .map(id => widgets.find(w => w.id === id)?.name)
-                                .filter(Boolean)
-                                .join(', ')
+                              // Criar UMA seção para CADA widget (individualmente)
+                              const newSections = selectedLayoutWidgets.map((widgetId, index) => {
+                                const widget = widgets.find(w => w.id === widgetId)
+                                return {
+                                  id: `widget_${widgetId}_${Date.now()}_${index}`,
+                                  type: 'widgets' as const,
+                                  label: widget?.name || 'Widget',
+                                  widget_ids: [widgetId], // Apenas UM widget por seção
+                                  enabled: true,
+                                  order: layoutConfig.sections.length + 1 + index
+                                }
+                              })
                               
-                              const newSection = {
-                                id: `widget_section_${Date.now()}`,
-                                type: 'widgets' as const,
-                                label: widgetNames.length > 50 
-                                  ? `Widgets: ${widgetNames.substring(0, 50)}...` 
-                                  : `Widgets: ${widgetNames}`,
-                                widget_ids: selectedLayoutWidgets,
-                                enabled: true,
-                                order: layoutConfig.sections.length + 1
-                              }
                               setLayoutConfig({ 
                                 ...layoutConfig, 
-                                sections: [...layoutConfig.sections, newSection as any] 
+                                sections: [...layoutConfig.sections, ...newSections as any[]] 
                               })
                               setSelectedLayoutWidgets([])
                               setShowAddWidget(false)
-                              showMessage('success', `Seção de widgets criada com ${selectedLayoutWidgets.length} widget(s)!`)
+                              showMessage('success', `${selectedLayoutWidgets.length} widget(s) adicionado(s) individualmente! Arraste para reordenar.`)
                             }
                           }}
                           disabled={selectedLayoutWidgets.length === 0}

@@ -885,16 +885,31 @@ export default function EmbedPreviewPage({
                 </div>
               )}
 
-              {/* Widgets */}
+              {/* Widgets - renderiza apenas os widgets específicos da seção */}
               {section.type === 'widgets' && widgets.length > 0 && (
                 <div className="widgets-section">
-                  {widgets
-                    .filter(w => w.is_active)
-                    .sort((a, b) => a.display_order - b.display_order)
-                    .map(widget => (
-                      <WidgetRenderer key={widget.id} widget={widget} colors={colors} />
-                    ))
-                  }
+                  {(() => {
+                    // Se a seção tem widget_ids específicos, renderiza apenas esses
+                    const sectionWidgetIds = (section as any).widget_ids as string[] | undefined
+                    
+                    if (sectionWidgetIds && sectionWidgetIds.length > 0) {
+                      // Renderiza apenas os widgets específicos desta seção
+                      return sectionWidgetIds
+                        .map(widgetId => widgets.find(w => w.id === widgetId))
+                        .filter((w): w is ThemeWidget => w !== undefined && w.is_active)
+                        .map(widget => (
+                          <WidgetRenderer key={widget.id} widget={widget} colors={colors} />
+                        ))
+                    } else {
+                      // Fallback: se não tem widget_ids, renderiza todos os ativos (compatibilidade)
+                      return widgets
+                        .filter(w => w.is_active)
+                        .sort((a, b) => a.display_order - b.display_order)
+                        .map(widget => (
+                          <WidgetRenderer key={widget.id} widget={widget} colors={colors} />
+                        ))
+                    }
+                  })()}
                 </div>
               )}
 
