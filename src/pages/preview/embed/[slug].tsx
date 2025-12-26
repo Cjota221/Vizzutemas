@@ -964,12 +964,12 @@ export default function EmbedPreviewPage({
           </div>
         )}
 
-        {/* Seções do Layout */}
+        {/* Seções do Layout - Ordenadas e Filtradas */}
         {layout.sections
           .filter(s => s.enabled)
           .sort((a, b) => a.order - b.order)
           .map((section, index) => (
-            <div key={`${section.type}-${index}`} className="section">
+            <div key={`${section.id}-${section.order}`} className="section">
               
               {/* Banner Principal */}
               {section.type === 'banner_principal' && banners.length > 0 && (
@@ -984,7 +984,7 @@ export default function EmbedPreviewPage({
               )}
 
               {/* Widgets - renderiza apenas os widgets específicos da seção */}
-              {section.type === 'widgets' && widgets.length > 0 && (
+              {section.type === 'widgets' && (
                 <div className="widgets-section">
                   {(() => {
                     // Se a seção tem widget_ids específicos, renderiza apenas esses
@@ -999,7 +999,17 @@ export default function EmbedPreviewPage({
                           <WidgetRenderer key={widget.id} widget={widget} colors={colors} />
                         ))
                     } else {
-                      // Fallback: se não tem widget_ids, renderiza todos os ativos (compatibilidade)
+                      // Fallback: se não tem widget_ids, tenta encontrar por nome na label
+                      const widgetName = section.label?.replace('Widgets: ', '').replace('Widgets HTML', '').trim()
+                      if (widgetName) {
+                        const matchingWidget = widgets.find(w => 
+                          w.name.toLowerCase() === widgetName.toLowerCase() && w.is_active
+                        )
+                        if (matchingWidget) {
+                          return <WidgetRenderer key={matchingWidget.id} widget={matchingWidget} colors={colors} />
+                        }
+                      }
+                      // Se ainda não encontrou, renderiza todos (compatibilidade)
                       return widgets
                         .filter(w => w.is_active)
                         .sort((a, b) => a.display_order - b.display_order)
@@ -1011,7 +1021,32 @@ export default function EmbedPreviewPage({
                 </div>
               )}
 
-              {/* Produtos */}
+              {/* Carrossel Customizado de Produtos */}
+              {section.type === 'carousel_custom' && (
+                <div className="py-6">
+                  {(() => {
+                    const productIds = (section as any).product_ids as string[] | undefined
+                    const carouselProducts = productIds 
+                      ? productIds.map(id => products.find(p => p.id === id)).filter((p): p is DemoProduct => p !== undefined)
+                      : products.slice(0, 8)
+                    
+                    if (carouselProducts.length === 0) return null
+                    
+                    return (
+                      <ProductCarousel
+                        title={section.label || 'Produtos'}
+                        products={carouselProducts}
+                        colors={colors}
+                        onAddCart={handleAddCart}
+                        btnText="Comprar"
+                        carouselStyle={layout.carousel_style}
+                      />
+                    )
+                  })()}
+                </div>
+              )}
+
+              {/* Produtos (seção padrão) */}
               {section.type === 'produtos' && products.length > 0 && (
                 <div className="py-6">
                   <ProductCarousel
