@@ -45,27 +45,107 @@ function WidgetRenderer({
     console.log(`🔧 [EMBED WIDGET] Carregando: "${widget.name}"`)
     
     try {
-      // Separar HTML de Scripts
-      const htmlWithoutScripts = widget.html_content.replace(/<script[\s\S]*?<\/script>/gi, '')
-      const scripts: string[] = []
-      widget.html_content.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, (match: string, code: string) => {
-        scripts.push(code)
+      // 1. Separar HTML de Scripts e Links
+      let htmlClean = widget.html_content
+      
+      // Extrair scripts externos (com src)
+      const externalScripts: string[] = []
+      htmlClean = htmlClean.replace(/<script[^>]+src=["']([^"']+)["'][^>]*><\/script>/gi, (match, src) => {
+        externalScripts.push(src)
         return ''
       })
       
-      // Inserir HTML
-      containerRef.current.innerHTML = htmlWithoutScripts
+      // Extrair scripts inline
+      const inlineScripts: string[] = []
+      htmlClean = htmlClean.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, (match, code) => {
+        if (code.trim()) {
+          inlineScripts.push(code)
+        }
+        return ''
+      })
       
-      // Executar scripts
-      scripts.forEach((code, index) => {
-        try {
-          const scriptElement = document.createElement('script')
-          scriptElement.textContent = code
-          containerRef.current?.appendChild(scriptElement)
-        } catch (error) {
-          console.error(`❌ [EMBED WIDGET] Erro no script ${index + 1}:`, error)
+      // Extrair links de CSS externos
+      const externalCSS: string[] = []
+      htmlClean = htmlClean.replace(/<link[^>]+href=["']([^"']+\.css[^"']*)["'][^>]*\/?>/gi, (match, href) => {
+        externalCSS.push(href)
+        return ''
+      })
+      
+      // Extrair links de fontes do Google
+      htmlClean = htmlClean.replace(/<link[^>]+href=["'](https:\/\/fonts\.googleapis\.com[^"']+)["'][^>]*\/?>/gi, (match, href) => {
+        externalCSS.push(href)
+        return ''
+      })
+      
+      console.log(`📦 [WIDGET ${widget.name}] Scripts externos: ${externalScripts.length}, Inline: ${inlineScripts.length}, CSS: ${externalCSS.length}`)
+      
+      // 2. Carregar CSS externos primeiro
+      externalCSS.forEach(href => {
+        if (!document.querySelector(`link[href="${href}"]`)) {
+          const link = document.createElement('link')
+          link.rel = 'stylesheet'
+          link.href = href
+          document.head.appendChild(link)
+          console.log(`🎨 [CSS] Carregado: ${href}`)
         }
       })
+      
+      // 3. Inserir HTML limpo
+      containerRef.current.innerHTML = htmlClean
+      
+      // 4. Carregar scripts externos em sequência
+      const loadExternalScript = (src: string): Promise<void> => {
+        return new Promise((resolve, reject) => {
+          // Verificar se já foi carregado
+          if (document.querySelector(`script[src="${src}"]`)) {
+            console.log(`⏭️ [SCRIPT] Já carregado: ${src}`)
+            resolve()
+            return
+          }
+          
+          const script = document.createElement('script')
+          script.src = src
+          script.async = false
+          script.onload = () => {
+            console.log(`✅ [SCRIPT] Carregado: ${src}`)
+            resolve()
+          }
+          script.onerror = () => {
+            console.error(`❌ [SCRIPT] Erro ao carregar: ${src}`)
+            reject(new Error(`Failed to load ${src}`))
+          }
+          document.head.appendChild(script)
+        })
+      }
+      
+      // Carregar scripts externos em sequência, depois executar inline
+      const loadAllScripts = async () => {
+        // Carregar externos primeiro
+        for (const src of externalScripts) {
+          try {
+            await loadExternalScript(src)
+          } catch (e) {
+            console.error(e)
+          }
+        }
+        
+        // Aguardar um pouco para as bibliotecas inicializarem
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // Executar scripts inline
+        inlineScripts.forEach((code, index) => {
+          try {
+            // Usar Function para criar escopo isolado
+            const fn = new Function(code)
+            fn()
+            console.log(`✅ [INLINE ${index + 1}] Executado`)
+          } catch (error) {
+            console.error(`❌ [INLINE ${index + 1}] Erro:`, error)
+          }
+        })
+      }
+      
+      loadAllScripts()
       
       console.log(`✅ [EMBED WIDGET] "${widget.name}" carregado`)
       
@@ -91,7 +171,7 @@ function WidgetRenderer({
             iframe.setAttribute('src', src + separator + 'autoplay=1&mute=1')
           }
         })
-      }, 500)
+      }, 1000)
       
     } catch (error) {
       console.error(`❌ [EMBED WIDGET] ERRO:`, error)
