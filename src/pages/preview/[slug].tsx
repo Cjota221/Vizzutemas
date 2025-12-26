@@ -197,6 +197,9 @@ type Props = {
 }
 
 // Componente para renderizar um widget individual com SANDBOX COMPLETO
+// ========================================
+// 🛡️ WIDGET RENDERER - VERSÃO SIMPLIFICADA
+// ========================================
 function WidgetRenderer({ 
   widget, 
   colors 
@@ -211,456 +214,66 @@ function WidgetRenderer({
   useEffect(() => {
     if (!containerRef.current || !widget.html_content) return
     
-    console.log(`🔧 [WIDGET DEBUG] Carregando widget: "${widget.name}" (ID: ${widget.id})`)
-    
-    // ========================================
-    // 🛡️🛡️🛡️ PROTEÇÃO NÍVEL 1: INTERCEPTAR style.overflow
-    // ========================================
-    // Propriedades CSS bloqueadas
-    const blockedCssProps = ['overflow', 'overflowY', 'overflowX', 'position', 'height', 'maxHeight']
-    
-    // Salvar setters originais
-    const originalBodyStyleDescriptor = Object.getOwnPropertyDescriptor(document.body, 'style')
-    const originalHtmlStyleDescriptor = Object.getOwnPropertyDescriptor(document.documentElement, 'style')
-    
-    // Criar proxy para interceptar alterações de estilo
-    const createStyleProxy = (element: HTMLElement, elementName: string) => {
-      const originalStyle = element.style
-      
-      // Sobrescrever setProperty
-      const originalSetProperty = originalStyle.setProperty.bind(originalStyle)
-      originalStyle.setProperty = function(property: string, value: string, priority?: string) {
-        if (blockedCssProps.some(prop => property.toLowerCase().includes(prop.toLowerCase()))) {
-          console.warn(`🚫 [STYLE BLOCK] Widget "${widget.name}" tentou setar ${elementName}.style.setProperty('${property}', '${value}') - BLOQUEADO`)
-          return
-        }
-        return originalSetProperty(property, value, priority || '')
-      }
-      
-      // Criar proxy para propriedades diretas (style.overflow = 'hidden')
-      return new Proxy(originalStyle, {
-        set(target, prop, value) {
-          const propStr = String(prop)
-          if (blockedCssProps.some(blocked => propStr.toLowerCase().includes(blocked.toLowerCase()))) {
-            console.warn(`🚫 [STYLE BLOCK] Widget "${widget.name}" tentou setar ${elementName}.style.${propStr} = '${value}' - BLOQUEADO`)
-            return true // Retornar true indica "sucesso" mas não faz nada
-          }
-          // @ts-ignore
-          target[prop] = value
-          return true
-        },
-        get(target, prop) {
-          // @ts-ignore
-          return target[prop]
-        }
-      })
-    }
-    
-    // Aplicar proxies no body e html
-    const bodyStyleProxy = createStyleProxy(document.body, 'body')
-    const htmlStyleProxy = createStyleProxy(document.documentElement, 'html')
-    
-    // Substituir style por proxy (isso é hacky mas funciona)
-    try {
-      Object.defineProperty(document.body, 'style', {
-        get: () => bodyStyleProxy,
-        configurable: true
-      })
-      Object.defineProperty(document.documentElement, 'style', {
-        get: () => htmlStyleProxy,
-        configurable: true
-      })
-      console.log(`🛡️ [STYLE PROXY] Proxies de estilo instalados para widget "${widget.name}"`)
-    } catch (e) {
-      console.warn(`⚠️ [STYLE PROXY] Não foi possível instalar proxy:`, e)
-    }
-    
-    // ========================================
-    // 🛡️🛡️🛡️ PROTEÇÃO NÍVEL 2: INTERCEPTAR classList.add
-    // ========================================
-    const blockedClasses = ['no-scroll', 'modal-open', 'overflow-hidden', 'fixed', 'lock-scroll', 'body-lock']
-    
-    const originalBodyClassListAdd = document.body.classList.add.bind(document.body.classList)
-    const originalHtmlClassListAdd = document.documentElement.classList.add.bind(document.documentElement.classList)
-    
-    document.body.classList.add = function(...classes: string[]) {
-      const safeClasses = classes.filter(c => {
-        const isBlocked = blockedClasses.some(blocked => c.toLowerCase().includes(blocked.toLowerCase()))
-        if (isBlocked) {
-          console.warn(`🚫 [CLASS BLOCK] Widget "${widget.name}" tentou adicionar body.classList.add('${c}') - BLOQUEADO`)
-        }
-        return !isBlocked
-      })
-      if (safeClasses.length > 0) {
-        originalBodyClassListAdd(...safeClasses)
-      }
-    }
-    
-    document.documentElement.classList.add = function(...classes: string[]) {
-      const safeClasses = classes.filter(c => {
-        const isBlocked = blockedClasses.some(blocked => c.toLowerCase().includes(blocked.toLowerCase()))
-        if (isBlocked) {
-          console.warn(`🚫 [CLASS BLOCK] Widget "${widget.name}" tentou adicionar html.classList.add('${c}') - BLOQUEADO`)
-        }
-        return !isBlocked
-      })
-      if (safeClasses.length > 0) {
-        originalHtmlClassListAdd(...safeClasses)
-      }
-    }
-    
-    // ========================================
-    // 🛡️ SANDBOX SETUP - Salvar estado original
-    // ========================================
-    const originalBodyOverflow = document.body.style.overflow
-    const originalHtmlOverflow = document.documentElement.style.overflow
-    const originalBodyPosition = document.body.style.position
-    const originalHtmlPosition = document.documentElement.style.position
-    
-    // Armazenar event listeners para cleanup
-    const addedListeners: Array<{target: EventTarget, type: string, listener: EventListener}> = []
-    
-    // ========================================
-    // 🛡️ INTERCEPTAR addEventListener GLOBAL
-    // ========================================
-    const originalAddEventListener = EventTarget.prototype.addEventListener
-    const blockedEvents = ['wheel', 'touchmove', 'scroll', 'touchstart', 'touchend']
-    
-    EventTarget.prototype.addEventListener = function(
-      type: string, 
-      listener: EventListenerOrEventListenerObject, 
-      options?: boolean | AddEventListenerOptions
-    ) {
-      // Se for document/body/html e evento de scroll, interceptar
-      if ((this === document || this === document.body || this === document.documentElement) && 
-          blockedEvents.includes(type)) {
-        console.warn(`🛡️ [SANDBOX] Widget "${widget.name}" tentou adicionar listener "${type}" no ${this === document ? 'document' : 'body/html'} - INTERCEPTADO`)
-        
-        // Criar wrapper que remove preventDefault
-        const safeListener = function(e: Event) {
-          // Não chamar o listener original que pode ter preventDefault
-          console.log(`🛡️ [SANDBOX] Evento "${type}" bloqueado para widget "${widget.name}"`)
-        }
-        
-        // Registrar para cleanup
-        addedListeners.push({ target: this, type, listener: safeListener as EventListener })
-        
-        // Não adicionar o listener original
-        return
-      }
-      
-      // Para outros eventos, permitir normalmente
-      return originalAddEventListener.call(this, type, listener, options)
-    }
+    console.log(`🔧 [WIDGET] Carregando: "${widget.name}"`)
     
     try {
       // Separar HTML de Scripts
       const htmlWithoutScripts = widget.html_content.replace(/<script[\s\S]*?<\/script>/gi, '')
       const scripts: string[] = []
-      widget.html_content.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, (match, code) => {
+      widget.html_content.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, (match: string, code: string) => {
         scripts.push(code)
         return ''
       })
       
-      console.log(`📦 [WIDGET DEBUG] Widget "${widget.name}" tem ${scripts.length} scripts`)
-      
-      // ========================================
-      // 🛡️ SANITIZAR HTML - Neutralizar CSS global
-      // ========================================
-      let sanitizedHtml = htmlWithoutScripts
-      
-      // Remover/neutralizar estilos que afetam html/body
-      sanitizedHtml = sanitizedHtml.replace(
-        /<style[^>]*>([\s\S]*?)<\/style>/gi, 
-        (match, cssContent) => {
-          // Remover regras que afetam html, body, :root
-          let safeCss = cssContent
-            .replace(/html\s*\{[^}]*\}/gi, '/* [SANDBOX] html rules removed */')
-            .replace(/body\s*\{[^}]*\}/gi, '/* [SANDBOX] body rules removed */')
-            .replace(/:root\s*\{[^}]*\}/gi, '/* [SANDBOX] :root rules removed */')
-            .replace(/\*\s*\{[^}]*overflow\s*:[^}]*\}/gi, '/* [SANDBOX] global overflow removed */')
-          
-          // Adicionar escopo ao CSS restante
-          return `<style data-widget-sandbox="true">${safeCss}</style>`
-        }
-      )
-      
       // Inserir HTML
-      containerRef.current.innerHTML = sanitizedHtml
-      console.log(`✅ [WIDGET DEBUG] HTML do widget "${widget.name}" inserido com sucesso`)
+      containerRef.current.innerHTML = htmlWithoutScripts
       
-      // ========================================
-      // 🛡️ EXECUTAR SCRIPTS com proteção
-      // ========================================
+      // Executar scripts
       scripts.forEach((code, index) => {
         try {
-          console.log(`🔨 [WIDGET DEBUG] Executando script ${index + 1}/${scripts.length} do widget "${widget.name}"`)
-          
-          // Script isolado COM proteção de scroll
-          const isolatedScript = `(function() {
-            try {
-              // 🛡️ Proteger scroll ANTES do script
-              var __savedBodyOverflow = document.body.style.overflow;
-              var __savedHtmlOverflow = document.documentElement.style.overflow;
-              
-              console.log('[WIDGET SCRIPT] Iniciando script ${index + 1} do widget "${widget.name}"');
-              
-              ${code}
-              
-              console.log('[WIDGET SCRIPT] Script ${index + 1} executado com sucesso');
-              
-              // 🛡️ Restaurar scroll DEPOIS do script (imediatamente)
-              setTimeout(function() {
-                if (document.body.style.overflow === 'hidden') {
-                  document.body.style.overflow = 'auto';
-                  document.body.style.overflowX = 'hidden';
-                  console.log('🛡️ [SANDBOX] Scroll restaurado após script ${index + 1}');
-                }
-                if (document.documentElement.style.overflow === 'hidden') {
-                  document.documentElement.style.overflow = 'auto';
-                  document.documentElement.style.overflowX = 'hidden';
-                }
-              }, 0);
-              
-            } catch(e) {
-              console.error('[WIDGET SCRIPT ERROR]', e);
-            }
-          })();`
-          
           const scriptElement = document.createElement('script')
-          scriptElement.textContent = isolatedScript
-          scriptElement.setAttribute('data-widget-sandbox', 'true')
-          
+          scriptElement.textContent = code
           containerRef.current?.appendChild(scriptElement)
-          console.log(`✅ [WIDGET DEBUG] Script ${index + 1} do widget "${widget.name}" adicionado`)
-          
         } catch (error) {
-          console.error(`❌ [WIDGET DEBUG] Widget "${widget.name}" script ${index + 1} error:`, error)
-          setHasError(true)
-          setErrorMessage(`Erro no script ${index + 1}: ${error}`)
+          console.error(`❌ [WIDGET] Erro no script ${index + 1}:`, error)
         }
       })
       
-      console.log(`🎉 [WIDGET DEBUG] Widget "${widget.name}" carregado completamente`)
+      console.log(`✅ [WIDGET] "${widget.name}" carregado`)
       
-      // ========================================
-      // 🛡️ MUTATION OBSERVER - Detectar mudanças contínuas
-      // ========================================
-      const observer = new MutationObserver((mutations) => {
-        // Verificar se alguma mutação afetou o scroll
-        const bodyStyle = window.getComputedStyle(document.body)
-        const htmlStyle = window.getComputedStyle(document.documentElement)
-        
-        if (bodyStyle.overflow === 'hidden' || htmlStyle.overflow === 'hidden') {
-          console.warn(`�️ [SANDBOX] Widget "${widget.name}" modificou overflow para hidden - REVERTENDO`)
-          document.body.style.overflow = 'auto'
-          document.body.style.overflowX = 'hidden'
-          document.documentElement.style.overflow = 'auto'
-          document.documentElement.style.overflowX = 'hidden'
-        }
-        
-        if (bodyStyle.position === 'fixed' || htmlStyle.position === 'fixed') {
-          console.warn(`�️ [SANDBOX] Widget "${widget.name}" modificou position para fixed - REVERTENDO`)
-          document.body.style.position = ''
-          document.documentElement.style.position = ''
-        }
-      })
-      
-      // Observar mudanças no body e html
-      observer.observe(document.body, { attributes: true, attributeFilter: ['style'] })
-      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] })
-      
-      // ========================================
-      // 🛡️ FORCE SCROLL - Garantir scroll funcional
-      // ========================================
-      const forceScroll = () => {
+      // 🛡️ PROTEÇÃO: Forçar scroll a cada 500ms por 5 segundos
+      let count = 0
+      const interval = setInterval(() => {
         document.body.style.overflow = 'auto'
+        document.body.style.overflowY = 'auto'
         document.body.style.overflowX = 'hidden'
+        document.body.style.position = 'static'
         document.documentElement.style.overflow = 'auto'
+        document.documentElement.style.overflowY = 'auto'
         document.documentElement.style.overflowX = 'hidden'
-        document.body.style.position = ''
-        document.documentElement.style.position = ''
-      }
+        document.documentElement.style.position = 'static'
+        
+        // Remover classes problemáticas
+        document.body.classList.remove('no-scroll', 'modal-open', 'overflow-hidden', 'fixed')
+        document.documentElement.classList.remove('no-scroll', 'modal-open', 'overflow-hidden', 'fixed')
+        
+        count++
+        if (count >= 10) clearInterval(interval)
+      }, 500)
       
-      // Forçar scroll após carregamento
-      setTimeout(forceScroll, 100)
-      setTimeout(forceScroll, 500)
-      setTimeout(forceScroll, 1000)
-      
-      // ========================================
-      // 🔴 REMOVER OVERLAYS E ELEMENTOS FIXED
-      // ========================================
-      const removeProblematicElements = () => {
-        // Remover elementos fixed que cobrem toda a tela
-        const allFixed = document.querySelectorAll('[style*="position: fixed"], [style*="position:fixed"]')
-        allFixed.forEach(el => {
-          const rect = el.getBoundingClientRect()
-          // Se o elemento fixed cobre grande parte da tela, removê-lo ou neutralizá-lo
-          if (rect.width > window.innerWidth * 0.8 && rect.height > window.innerHeight * 0.8) {
-            console.warn(`🔴 [SANDBOX] Removendo overlay fixed grande: ${el.tagName}.${el.className}`)
-            ;(el as HTMLElement).style.display = 'none'
-          }
-        })
-        
-        // Remover backdrops e overlays conhecidos
-        const overlaySelectors = [
-          '[class*="overlay"]',
-          '[class*="backdrop"]',
-          '[class*="modal-bg"]',
-          '[class*="loading"]',
-          '[id*="overlay"]',
-          '[id*="backdrop"]'
-        ]
-        
-        overlaySelectors.forEach(selector => {
-          document.querySelectorAll(selector).forEach(el => {
-            const style = window.getComputedStyle(el)
-            if (style.position === 'fixed' || style.position === 'absolute') {
-              const rect = el.getBoundingClientRect()
-              if (rect.width > window.innerWidth * 0.5 || rect.height > window.innerHeight * 0.5) {
-                console.warn(`🔴 [SANDBOX] Escondendo overlay: ${selector}`)
-                ;(el as HTMLElement).style.display = 'none'
-              }
-            }
-          })
-        })
-        
-        // Verificar elementos dentro do container do widget
-        if (containerRef.current) {
-          const fixedInWidget = containerRef.current.querySelectorAll('*')
-          fixedInWidget.forEach(el => {
-            const style = window.getComputedStyle(el)
-            if (style.position === 'fixed') {
-              console.warn(`🔴 [SANDBOX] Convertendo fixed para relative dentro do widget: ${el.tagName}`)
-              ;(el as HTMLElement).style.position = 'relative'
-              ;(el as HTMLElement).style.top = 'auto'
-              ;(el as HTMLElement).style.left = 'auto'
-              ;(el as HTMLElement).style.right = 'auto'
-              ;(el as HTMLElement).style.bottom = 'auto'
-              ;(el as HTMLElement).style.zIndex = '1'
-            }
-          })
-        }
-      }
-      
-      // Executar remoção de overlays após carregamento
-      setTimeout(removeProblematicElements, 200)
-      setTimeout(removeProblematicElements, 1000)
-      setTimeout(removeProblematicElements, 3000)
-      
-      // ========================================
-      // 🔴 REMOVER OVERLAYS BRANCOS
-      // ========================================
-      const removeWhiteOverlays = () => {
-        // Buscar elementos que podem ser overlays brancos
-        const allElements = document.querySelectorAll('div, section, span')
-        allElements.forEach(el => {
-          const style = window.getComputedStyle(el)
-          const rect = el.getBoundingClientRect()
-          
-          // Se o elemento cobre grande parte da tela
-          if (rect.width > window.innerWidth * 0.9 && rect.height > window.innerHeight * 0.9) {
-            const bgColor = style.backgroundColor
-            const zIndex = parseInt(style.zIndex) || 0
-            
-            // Se tem fundo branco ou transparente e z-index alto, pode ser um overlay
-            if (zIndex > 100 || style.position === 'fixed' || style.position === 'absolute') {
-              // Verificar se está acima do conteúdo
-              if (rect.top <= 0 && rect.left <= 0) {
-                console.warn(`🔴 [SANDBOX] Detectado possível overlay: ${el.tagName}.${el.className}, bg: ${bgColor}, z: ${zIndex}, pos: ${style.position}`)
-                
-                // Se parece ser um overlay problemático, esconder
-                if (style.position === 'fixed' || (zIndex > 500)) {
-                  console.warn(`🔴 [SANDBOX] REMOVENDO overlay: ${el.tagName}.${el.className}`)
-                  ;(el as HTMLElement).style.display = 'none'
-                }
-              }
-            }
-          }
-        })
-      }
-      
-      // Executar detecção de overlays brancos
-      setTimeout(removeWhiteOverlays, 500)
-      setTimeout(removeWhiteOverlays, 2000)
-
-      // ========================================
-      // 🧹 CLEANUP
-      // ========================================
-      return () => {
-        console.log(`🧹 [WIDGET DEBUG] Limpando widget "${widget.name}"`)
-        
-        // Restaurar addEventListener original
-        EventTarget.prototype.addEventListener = originalAddEventListener
-        
-        // Restaurar classList.add originais
-        document.body.classList.add = originalBodyClassListAdd
-        document.documentElement.classList.add = originalHtmlClassListAdd
-        
-        // Restaurar style descriptors originais
-        try {
-          if (originalBodyStyleDescriptor) {
-            Object.defineProperty(document.body, 'style', originalBodyStyleDescriptor)
-          }
-          if (originalHtmlStyleDescriptor) {
-            Object.defineProperty(document.documentElement, 'style', originalHtmlStyleDescriptor)
-          }
-        } catch (e) {
-          console.warn(`⚠️ [CLEANUP] Erro ao restaurar style descriptors:`, e)
-        }
-        
-        // Desconectar observer
-        observer.disconnect()
-        
-        // Remover scripts
-        if (containerRef.current) {
-          const scripts = containerRef.current.querySelectorAll('script')
-          scripts.forEach(s => s.remove())
-        }
-        
-        // Restaurar estilos originais
-        document.body.style.overflow = originalBodyOverflow
-        document.documentElement.style.overflow = originalHtmlOverflow
-        document.body.style.position = originalBodyPosition
-        document.documentElement.style.position = originalHtmlPosition
-      }
+      return () => clearInterval(interval)
       
     } catch (error) {
-      console.error(`❌ [WIDGET DEBUG] ERRO CRÍTICO ao carregar widget "${widget.name}":`, error)
+      console.error(`❌ [WIDGET] ERRO:`, error)
       setHasError(true)
-      setErrorMessage(`Erro crítico: ${error}`)
-      
-      // Restaurar addEventListener mesmo em caso de erro
-      EventTarget.prototype.addEventListener = originalAddEventListener
-      
-      // Restaurar classList.add em caso de erro também
-      document.body.classList.add = originalBodyClassListAdd
-      document.documentElement.classList.add = originalHtmlClassListAdd
+      setErrorMessage(`${error}`)
     }
-    
   }, [widget.html_content, widget.id, widget.name])
   
-  // Se tiver erro, mostrar card de erro ao invés de travar
   if (hasError) {
     return (
-      <div 
-        className="widget-error" 
-        style={{
-          padding: '20px',
-          margin: '10px 0',
-          backgroundColor: '#fee',
-          border: '2px solid #f00',
-          borderRadius: '8px',
-          fontFamily: 'monospace'
-        }}
-      >
-        <h3 style={{ color: '#c00', marginTop: 0 }}>⚠️ Widget com Erro</h3>
-        <p><strong>Nome:</strong> {widget.name}</p>
-        <p><strong>ID:</strong> {widget.id}</p>
-        <p><strong>Erro:</strong> {errorMessage}</p>
-        <p style={{ fontSize: '12px', color: '#666' }}>
-          Verifique o console (F12) para mais detalhes. Este widget foi isolado para não travar a página.
-        </p>
+      <div style={{ padding: '20px', margin: '10px 0', backgroundColor: '#fee2e2', border: '1px solid #f87171', borderRadius: '8px' }}>
+        <p style={{ color: '#b91c1c', margin: 0 }}>⚠️ Widget "{widget.name}" com erro: {errorMessage}</p>
       </div>
     )
   }
@@ -672,13 +285,8 @@ function WidgetRenderer({
       data-widget-id={widget.id}
       data-widget-name={widget.name}
       style={{
-        // 🛡️ SANDBOX CONTAINER - Isolamento de z-index e overflow
         position: 'relative',
         zIndex: 1,
-        isolation: 'isolate', // Cria novo stacking context
-        contain: 'layout style', // CSS Containment
-        overflow: 'visible',
-        // Variáveis CSS disponíveis para os widgets
         '--cor-fundo-pagina': colors.cor_fundo_pagina,
         '--cor-detalhes-fundo': colors.cor_detalhes_fundo,
         '--cor-fundo-barra-superior': colors.cor_fundo_barra_superior,
@@ -692,7 +300,6 @@ function WidgetRenderer({
         '--cor-fundo-submenu-desktop': colors.cor_fundo_submenu_desktop,
         '--cor-fundo-menu-mobile': colors.cor_fundo_menu_mobile,
         '--cor-fundo-rodape': colors.cor_fundo_rodape,
-        // Aliases mais simples
         '--cor-primaria': colors.cor_detalhes_gerais,
         '--cor-secundaria': colors.cor_demais_botoes,
         '--cor-destaque': colors.cor_botao_enviar_pedido,
