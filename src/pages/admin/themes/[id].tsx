@@ -735,10 +735,18 @@ export default function EditThemePage() {
                             Categoria: {(section as any).category}
                           </span>
                         )}
+                        {/* Mostrar nomes dos widgets individualmente */}
                         {section.type === 'widgets' && (section as any).widget_ids && (
-                          <span className="text-xs text-yellow-600 ml-2 px-2 py-0.5 bg-yellow-50 rounded">
-                            {(section as any).widget_ids.length} widget(s)
-                          </span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {(section as any).widget_ids.map((widgetId: string) => {
+                              const widget = widgets.find(w => w.id === widgetId)
+                              return widget ? (
+                                <span key={widgetId} className="text-xs text-yellow-700 px-2 py-0.5 bg-yellow-100 rounded-full">
+                                  {widget.name}
+                                </span>
+                              ) : null
+                            })}
+                          </div>
                         )}
                       </div>
                       
@@ -877,10 +885,18 @@ export default function EditThemePage() {
                         <button
                           onClick={() => {
                             if (selectedLayoutWidgets.length > 0) {
+                              // Criar label com os nomes dos widgets
+                              const widgetNames = selectedLayoutWidgets
+                                .map(id => widgets.find(w => w.id === id)?.name)
+                                .filter(Boolean)
+                                .join(', ')
+                              
                               const newSection = {
                                 id: `widget_section_${Date.now()}`,
                                 type: 'widgets' as const,
-                                label: `Widgets (${selectedLayoutWidgets.length})`,
+                                label: widgetNames.length > 50 
+                                  ? `Widgets: ${widgetNames.substring(0, 50)}...` 
+                                  : `Widgets: ${widgetNames}`,
                                 widget_ids: selectedLayoutWidgets,
                                 enabled: true,
                                 order: layoutConfig.sections.length + 1
