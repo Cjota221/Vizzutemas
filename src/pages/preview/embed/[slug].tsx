@@ -9,7 +9,7 @@
 import { GetServerSideProps } from 'next'
 import Head from 'next/head'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { getThemeBySlug, generateBaseCss, getActiveWidgetsByTheme } from '@/lib/supabase/themes'
+import { getThemeBySlug, generateBaseCss, getActiveWidgetsByTheme, getCssByPage } from '@/lib/supabase/themes'
 import { getProducts, getBanners } from '@/lib/supabase/store'
 import { ColorConfig, LayoutConfig } from '@/lib/types'
 import type { DemoProduct, ThemeBanner } from '@/lib/supabase/store'
@@ -972,10 +972,11 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     }
 
     // Buscar dados em paralelo - passando theme.id
-    const [widgets, products, banners] = await Promise.all([
+    const [widgets, products, banners, pageCss] = await Promise.all([
       getActiveWidgetsByTheme(theme.id),
       getProducts(theme.id),
       getBanners(theme.id),
+      getCssByPage(theme.id, 'home'), // CSS customizado da página home
     ])
 
     // Cores do tema - usando color_config
@@ -1008,8 +1009,10 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     }
     const layout: LayoutConfig = theme.layout_config || defaultLayout
 
-    // CSS injetado
-    const injectedCss = generateBaseCss(colors)
+    // CSS injetado = variáveis de cores + CSS customizado por página
+    const baseCss = generateBaseCss(colors)
+    const customCss = pageCss?.css_code || ''
+    const injectedCss = baseCss + '\n\n/* === CSS CUSTOMIZADO DA PÁGINA === */\n' + customCss
 
     return {
       props: {
