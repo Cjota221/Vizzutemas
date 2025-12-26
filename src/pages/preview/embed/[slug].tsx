@@ -196,7 +196,8 @@ function WidgetRenderer({
       data-widget-name={widget.name}
       style={{
         position: 'relative',
-        zIndex: 1,
+        isolation: 'isolate',
+        display: 'block',
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box',
@@ -391,6 +392,52 @@ html, body {
   max-width: 100vw !important;
   margin: 0;
   padding: 0;
+}
+
+/* ========================================
+   🛡️ ISOLAMENTO DE WIDGETS
+   Cada widget é isolado para evitar sobreposição
+   ======================================== */
+
+/* Container de widgets em flex column */
+.widgets-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+/* Cada widget é um bloco isolado */
+.widget {
+  position: relative !important;
+  isolation: isolate !important;
+  transform: translateZ(0) !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  z-index: 1 !important;
+}
+
+/* Elementos absolutos dentro de widgets ficam contidos */
+.widget [style*="position: absolute"],
+.widget [style*="position:absolute"] {
+  position: absolute !important;
+  z-index: auto !important;
+}
+
+/* Limitar z-index dentro de widgets */
+.widget * {
+  z-index: auto !important;
+}
+
+/* Exceção: modals e overlays podem ter z-index alto, mas dentro do widget */
+.widget [class*="modal"],
+.widget [class*="overlay"],
+.widget [class*="popup"],
+.widget [class*="dropdown"] {
+  z-index: 100 !important;
 }
 
 /* Widgets devem respeitar container */
