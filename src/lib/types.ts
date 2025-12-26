@@ -34,11 +34,23 @@ export type LayoutSection = {
   widget_ids?: string[]  // IDs dos widgets selecionados para seção de widgets
 }
 
+// Configuração de estilo do carrossel de produtos
+export type CarouselStyleConfig = {
+  title_alignment: 'left' | 'center' | 'right'  // Alinhamento do título
+  title_font_size: 'sm' | 'md' | 'lg' | 'xl'    // Tamanho da fonte do título
+  product_name_size: 'xs' | 'sm' | 'md'         // Tamanho da fonte do nome do produto
+  price_size: 'sm' | 'md' | 'lg'                // Tamanho da fonte do preço
+  button_style: 'full' | 'outline' | 'minimal'  // Estilo do botão
+  show_badge: boolean                           // Mostrar badge de desconto/destaque
+  card_shadow: 'none' | 'sm' | 'md' | 'lg'      // Sombra do card
+}
+
 // Configuração de layout do tema
 export type LayoutConfig = {
   sections: LayoutSection[]
   products_per_row: number  // 4, 5 ou 6 produtos por linha
   logo_url?: string  // URL da logomarca
+  carousel_style?: CarouselStyleConfig // Estilos do carrossel
 }
 
 // Tema - representa um tema disponível na plataforma

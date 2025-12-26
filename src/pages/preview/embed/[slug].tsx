@@ -11,7 +11,7 @@ import Head from 'next/head'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { getThemeBySlug, generateBaseCss, getActiveWidgetsByTheme, getCssByPage } from '@/lib/supabase/themes'
 import { getProducts, getBanners } from '@/lib/supabase/store'
-import { ColorConfig, LayoutConfig } from '@/lib/types'
+import { ColorConfig, LayoutConfig, CarouselStyleConfig } from '@/lib/types'
 import type { DemoProduct, ThemeBanner } from '@/lib/supabase/store'
 
 // Tipo para widget
@@ -232,16 +232,64 @@ function ProductCarousel({
   products, 
   colors, 
   onAddCart, 
-  btnText 
+  btnText,
+  carouselStyle
 }: { 
   title: string
   products: DemoProduct[]
   colors: ColorConfig
   onAddCart: () => void
   btnText: string
+  carouselStyle?: CarouselStyleConfig
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const displayProducts = products.length > 0 ? [...products, ...products, ...products] : []
+
+  // Configurações padrão
+  const style = carouselStyle || {
+    title_alignment: 'center',
+    title_font_size: 'lg',
+    product_name_size: 'sm',
+    price_size: 'md',
+    button_style: 'full',
+    show_badge: true,
+    card_shadow: 'sm'
+  }
+
+  // Classes de tamanho de fonte
+  const titleSizeClass = {
+    sm: 'text-base',
+    md: 'text-lg',
+    lg: 'text-xl',
+    xl: 'text-2xl'
+  }[style.title_font_size]
+
+  const productNameSizeClass = {
+    xs: 'text-xs',
+    sm: 'text-sm',
+    md: 'text-base'
+  }[style.product_name_size]
+
+  const priceSizeClass = {
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg'
+  }[style.price_size]
+
+  // Classes de sombra do card
+  const shadowClass = {
+    none: '',
+    sm: 'shadow-sm',
+    md: 'shadow-md',
+    lg: 'shadow-lg'
+  }[style.card_shadow]
+
+  // Alinhamento do título
+  const alignmentClass = {
+    left: 'justify-start',
+    center: 'justify-center',
+    right: 'justify-end'
+  }[style.title_alignment]
 
   useEffect(() => {
     if (scrollRef.current && products.length > 0) {
@@ -275,13 +323,63 @@ function ProductCarousel({
 
   if (products.length === 0) return null
 
+  // Estilo do botão baseado na configuração
+  const getButtonStyle = () => {
+    switch (style.button_style) {
+      case 'outline':
+        return {
+          backgroundColor: 'transparent',
+          border: `2px solid ${colors.cor_demais_botoes}`,
+          color: colors.cor_demais_botoes
+        }
+      case 'minimal':
+        return {
+          backgroundColor: 'transparent',
+          border: 'none',
+          color: colors.cor_demais_botoes,
+          textDecoration: 'underline'
+        }
+      default: // 'full'
+        return {
+          backgroundColor: colors.cor_demais_botoes,
+          color: 'white'
+        }
+    }
+  }
+
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between px-4 mb-3">
-        <h2 className="text-lg font-bold" style={{ color: colors.cor_detalhes_gerais }}>
+      <div className={`flex items-center ${alignmentClass} px-4 mb-3`}>
+        <h2 className={`${titleSizeClass} font-bold`} style={{ color: colors.cor_detalhes_gerais }}>
           {title}
         </h2>
-        <div className="flex gap-2">
+        {style.title_alignment === 'left' && (
+          <div className="flex gap-2 ml-auto">
+            <button 
+              onClick={() => scroll('left')}
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: colors.cor_detalhes_fundo }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke={colors.cor_detalhes_gerais} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button 
+              onClick={() => scroll('right')}
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: colors.cor_detalhes_fundo }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke={colors.cor_detalhes_gerais} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Setas centralizadas para título centralizado */}
+      {style.title_alignment === 'center' && (
+        <div className="flex justify-center gap-2 mb-3">
           <button 
             onClick={() => scroll('left')}
             className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -301,7 +399,7 @@ function ProductCarousel({
             </svg>
           </button>
         </div>
-      </div>
+      )}
 
       <div 
         ref={scrollRef}
@@ -312,12 +410,12 @@ function ProductCarousel({
         {displayProducts.map((product, idx) => (
           <div 
             key={`${product.id}-${idx}`} 
-            className="flex-shrink-0 w-40 rounded-xl overflow-hidden shadow-md"
+            className={`flex-shrink-0 w-40 rounded-xl overflow-hidden ${shadowClass}`}
             style={{ backgroundColor: colors.cor_detalhes_fundo, scrollSnapAlign: 'start' }}
           >
             <div className="relative aspect-square">
               <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-              {product.badge && (
+              {style.show_badge && product.badge && (
                 <span 
                   className="absolute top-2 left-2 text-white text-xs font-bold px-2 py-1 rounded"
                   style={{ backgroundColor: colors.cor_botao_enviar_pedido }}
@@ -327,27 +425,27 @@ function ProductCarousel({
               )}
             </div>
             <div className="p-3">
-              <h3 className="text-sm font-medium truncate text-gray-800">{product.name}</h3>
+              <h3 className={`${productNameSizeClass} font-medium truncate text-gray-800`}>{product.name}</h3>
               <div className="mt-1">
                 {product.original_price ? (
                   <>
                     <span className="text-xs text-gray-400 line-through">
                       R$ {product.original_price.toFixed(2)}
                     </span>
-                    <span className="ml-1 font-bold text-sm" style={{ color: colors.cor_botao_enviar_pedido }}>
+                    <span className={`ml-1 font-bold ${priceSizeClass}`} style={{ color: colors.cor_botao_enviar_pedido }}>
                       R$ {product.price.toFixed(2)}
                     </span>
                   </>
                 ) : (
-                  <span className="font-bold text-sm" style={{ color: colors.cor_detalhes_gerais }}>
+                  <span className={`font-bold ${priceSizeClass}`} style={{ color: colors.cor_detalhes_gerais }}>
                     R$ {product.price.toFixed(2)}
                   </span>
                 )}
               </div>
               <button 
                 onClick={onAddCart}
-                className="mt-2 w-full py-2 rounded-lg text-xs font-bold text-white transition hover:opacity-90"
-                style={{ backgroundColor: colors.cor_demais_botoes }}
+                className="mt-2 w-full py-2 rounded-lg text-xs font-bold transition hover:opacity-90"
+                style={getButtonStyle()}
               >
                 {btnText}
               </button>
@@ -922,6 +1020,7 @@ export default function EmbedPreviewPage({
                     colors={colors}
                     onAddCart={handleAddCart}
                     btnText="Comprar"
+                    carouselStyle={layout.carousel_style}
                   />
                   {products.length > 10 && (
                     <ProductCarousel
@@ -930,6 +1029,7 @@ export default function EmbedPreviewPage({
                       colors={colors}
                       onAddCart={handleAddCart}
                       btnText="Ver produto"
+                      carouselStyle={layout.carousel_style}
                     />
                   )}
                 </div>

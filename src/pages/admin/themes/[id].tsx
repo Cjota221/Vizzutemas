@@ -110,7 +110,16 @@ export default function EditThemePage() {
       { id: 'avaliacoes', type: 'avaliacoes', label: 'Avaliações', enabled: false, order: 5 },
       { id: 'info_loja', type: 'info_loja', label: 'Informações da Loja', enabled: false, order: 6 },
     ],
-    products_per_row: 6
+    products_per_row: 6,
+    carousel_style: {
+      title_alignment: 'center',
+      title_font_size: 'lg',
+      product_name_size: 'sm',
+      price_size: 'md',
+      button_style: 'full',
+      show_badge: true,
+      card_shadow: 'sm'
+    }
   }
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>(defaultLayoutConfig)
   
@@ -1321,6 +1330,206 @@ export default function EditThemePage() {
                   <span className="text-sm text-slate-500">colunas</span>
                 </div>
                 <p className="text-xs text-slate-400 mt-2">No mobile serão 2 produtos por linha automaticamente</p>
+              </div>
+            </Card>
+
+            {/* Estilo do Carrossel de Produtos */}
+            <Card>
+              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-semibold text-slate-800 mb-6">🎨 Estilo do Carrossel de Produtos</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Alinhamento do Título */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Alinhamento do Título</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: 'left', label: '⬅️ Esquerda' },
+                        { value: 'center', label: '↔️ Centro' },
+                        { value: 'right', label: '➡️ Direita' }
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setLayoutConfig({ 
+                            ...layoutConfig, 
+                            carousel_style: { ...layoutConfig.carousel_style!, title_alignment: opt.value as any } 
+                          })}
+                          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
+                            layoutConfig.carousel_style?.title_alignment === opt.value
+                              ? 'bg-slate-900 text-white'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tamanho da Fonte do Título */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Tamanho do Título</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: 'sm', label: 'P' },
+                        { value: 'md', label: 'M' },
+                        { value: 'lg', label: 'G' },
+                        { value: 'xl', label: 'GG' }
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setLayoutConfig({ 
+                            ...layoutConfig, 
+                            carousel_style: { ...layoutConfig.carousel_style!, title_font_size: opt.value as any } 
+                          })}
+                          className={`w-12 h-10 rounded-lg font-bold transition ${
+                            layoutConfig.carousel_style?.title_font_size === opt.value
+                              ? 'bg-slate-900 text-white'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tamanho do Nome do Produto */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Tamanho do Nome do Produto</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: 'xs', label: 'PP' },
+                        { value: 'sm', label: 'P' },
+                        { value: 'md', label: 'M' }
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setLayoutConfig({ 
+                            ...layoutConfig, 
+                            carousel_style: { ...layoutConfig.carousel_style!, product_name_size: opt.value as any } 
+                          })}
+                          className={`w-12 h-10 rounded-lg font-bold transition ${
+                            layoutConfig.carousel_style?.product_name_size === opt.value
+                              ? 'bg-slate-900 text-white'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Tamanho do Preço */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Tamanho do Preço</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: 'sm', label: 'P' },
+                        { value: 'md', label: 'M' },
+                        { value: 'lg', label: 'G' }
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setLayoutConfig({ 
+                            ...layoutConfig, 
+                            carousel_style: { ...layoutConfig.carousel_style!, price_size: opt.value as any } 
+                          })}
+                          className={`w-12 h-10 rounded-lg font-bold transition ${
+                            layoutConfig.carousel_style?.price_size === opt.value
+                              ? 'bg-slate-900 text-white'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Estilo do Botão */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Estilo do Botão</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: 'full', label: 'Preenchido' },
+                        { value: 'outline', label: 'Contorno' },
+                        { value: 'minimal', label: 'Minimalista' }
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setLayoutConfig({ 
+                            ...layoutConfig, 
+                            carousel_style: { ...layoutConfig.carousel_style!, button_style: opt.value as any } 
+                          })}
+                          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
+                            layoutConfig.carousel_style?.button_style === opt.value
+                              ? 'bg-slate-900 text-white'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sombra do Card */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">Sombra do Card</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: 'none', label: 'Sem' },
+                        { value: 'sm', label: 'Leve' },
+                        { value: 'md', label: 'Média' },
+                        { value: 'lg', label: 'Forte' }
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setLayoutConfig({ 
+                            ...layoutConfig, 
+                            carousel_style: { ...layoutConfig.carousel_style!, card_shadow: opt.value as any } 
+                          })}
+                          className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium transition ${
+                            layoutConfig.carousel_style?.card_shadow === opt.value
+                              ? 'bg-slate-900 text-white'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Mostrar Badge */}
+                  <div className="md:col-span-2">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={layoutConfig.carousel_style?.show_badge ?? true}
+                        onChange={(e) => setLayoutConfig({ 
+                          ...layoutConfig, 
+                          carousel_style: { ...layoutConfig.carousel_style!, show_badge: e.target.checked } 
+                        })}
+                        className="w-5 h-5 rounded text-slate-900 focus:ring-slate-500"
+                      />
+                      <span className="text-sm font-medium text-slate-700">Mostrar badges de desconto/destaque nos produtos</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Botão Salvar */}
+                <div className="mt-6 pt-4 border-t border-slate-200">
+                  <button 
+                    onClick={handleSaveLayout} 
+                    disabled={saving} 
+                    className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-lg font-medium text-sm transition"
+                  >
+                    {saving ? 'Salvando...' : '💾 Salvar Configurações'}
+                  </button>
+                </div>
               </div>
             </Card>
 
