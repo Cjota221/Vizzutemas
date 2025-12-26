@@ -2,23 +2,31 @@
  * 🖼️ EMBED PREVIEW - Versão isolada para iframe
  * 
  * Esta página renderiza APENAS o conteúdo do tema (widgets, produtos, etc.)
- * SEM a barra de admin ou controles de preview.
- * 
  * É carregada dentro de um iframe na página principal de preview,
- * permitindo que as media queries funcionem corretamente baseadas
- * no viewport do iframe (não do navegador).
+ * permitindo que as media queries funcionem corretamente.
  */
 
 import { GetServerSideProps } from 'next'
 import Head from 'next/head'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { getThemeBySlug, generateBaseCss, getActiveWidgetsByTheme } from '@/lib/supabase/themes'
-import { getProducts, getDemoBanners, getStoreConfig } from '@/lib/supabase/store'
-import { ColorConfig, ThemeWidget, LayoutConfig } from '@/lib/types'
-import type { DemoProduct, DemoBanner, StoreConfig } from '@/lib/supabase/store'
+import { getProducts, getBanners } from '@/lib/supabase/store'
+import { ColorConfig, LayoutConfig } from '@/lib/types'
+import type { DemoProduct, ThemeBanner } from '@/lib/supabase/store'
+
+// Tipo para widget
+type ThemeWidget = {
+  id: string
+  theme_id: string
+  name: string
+  widget_type: string
+  html_content?: string
+  display_order: number
+  is_active: boolean
+}
 
 // ========================================
-// 🛡️ WIDGET RENDERER PARA EMBED
+// 🛡️ WIDGET RENDERER
 // ========================================
 function WidgetRenderer({ 
   widget, 
@@ -66,7 +74,7 @@ function WidgetRenderer({
         if (!containerRef.current) return
         
         const videos = containerRef.current.querySelectorAll('video')
-        videos.forEach((video, index) => {
+        videos.forEach((video) => {
           video.setAttribute('autoplay', '')
           video.setAttribute('playsinline', '')
           video.setAttribute('muted', '')
@@ -227,26 +235,26 @@ function ProductCarousel({
             style={{ backgroundColor: colors.cor_detalhes_fundo, scrollSnapAlign: 'start' }}
           >
             <div className="relative aspect-square">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-              {product.discount && (
+              <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+              {product.badge && (
                 <span 
                   className="absolute top-2 left-2 text-white text-xs font-bold px-2 py-1 rounded"
                   style={{ backgroundColor: colors.cor_botao_enviar_pedido }}
                 >
-                  -{product.discount}%
+                  {product.badge === 'destaque' ? '⭐' : product.badge === 'novo' ? '🆕' : product.badge === 'promocao' ? '🔥' : '🏆'}
                 </span>
               )}
             </div>
             <div className="p-3">
               <h3 className="text-sm font-medium truncate text-gray-800">{product.name}</h3>
               <div className="mt-1">
-                {product.discount ? (
+                {product.original_price ? (
                   <>
                     <span className="text-xs text-gray-400 line-through">
-                      R$ {product.price.toFixed(2)}
+                      R$ {product.original_price.toFixed(2)}
                     </span>
                     <span className="ml-1 font-bold text-sm" style={{ color: colors.cor_botao_enviar_pedido }}>
-                      R$ {(product.price * (1 - product.discount / 100)).toFixed(2)}
+                      R$ {product.price.toFixed(2)}
                     </span>
                   </>
                 ) : (
@@ -271,7 +279,7 @@ function ProductCarousel({
 }
 
 // ========================================
-// 📄 TIPOS
+// 📄 TIPOS DAS PROPS
 // ========================================
 interface EmbedPreviewProps {
   theme: {
@@ -284,20 +292,14 @@ interface EmbedPreviewProps {
   injectedCss: string
   widgets: ThemeWidget[]
   products: DemoProduct[]
-  banners: DemoBanner[]
-  storeConfig: StoreConfig | null
+  banners: ThemeBanner[]
+  storeName: string
 }
 
 // ========================================
 // 🎨 CSS BASE PARA CONTENÇÃO
 // ========================================
 const BASE_CONTAINMENT_CSS = `
-/* ====================================
-   🛡️ CSS BASE PARA CONTENÇÃO DE WIDGETS
-   ====================================
-   Garante que widgets não quebrem o layout
-*/
-
 /* Reset básico para contenção */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -307,9 +309,6 @@ const BASE_CONTAINMENT_CSS = `
 html, body {
   overflow-x: hidden !important;
   max-width: 100vw !important;
-}
-
-body {
   margin: 0;
   padding: 0;
 }
@@ -376,16 +375,6 @@ body {
   position: relative !important;
 }
 
-/* Conter elementos que tentam sair do container */
-.widget [style*="width: 100vw"],
-.widget [style*="width:100vw"],
-.widget [style*="left: -"],
-.widget [style*="margin-left: -"] {
-  width: 100% !important;
-  left: 0 !important;
-  margin-left: 0 !important;
-}
-
 /* Scrollbar escondida para carrosséis */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
@@ -405,12 +394,6 @@ body {
   max-width: 100% !important;
   overflow: hidden !important;
 }
-
-.widget .swiper-slide,
-.widget .splide__slide,
-.widget .slick-slide {
-  max-width: 100% !important;
-}
 `
 
 // ========================================
@@ -424,17 +407,16 @@ export default function EmbedPreviewPage({
   widgets,
   products,
   banners,
-  storeConfig
+  storeName
 }: EmbedPreviewProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [cartCount, setCartCount] = useState(0)
 
-  // Função para adicionar ao carrinho
   const handleAddCart = useCallback(() => {
     setCartCount(prev => prev + 1)
   }, [])
 
-  // Comunicar altura para o pai (para ajuste do iframe)
+  // Comunicar altura para o pai
   useEffect(() => {
     const sendHeight = () => {
       const height = document.documentElement.scrollHeight
@@ -471,9 +453,6 @@ export default function EmbedPreviewPage({
     }
   `
 
-  // Logo
-  const logoUrl = storeConfig?.logo_url || null
-
   return (
     <>
       <Head>
@@ -490,7 +469,7 @@ export default function EmbedPreviewPage({
           className="text-center py-2 text-xs font-medium text-white"
           style={{ backgroundColor: colors.cor_fundo_barra_superior }}
         >
-          {storeConfig?.top_bar_text || '🎁 Frete Grátis acima de R$ 299 | Use o cupom PRIMEIRACOMPRA'}
+          🎁 Frete Grátis acima de R$ 299 | Use o cupom PRIMEIRACOMPRA
         </div>
 
         {/* Header */}
@@ -511,13 +490,9 @@ export default function EmbedPreviewPage({
 
             {/* Logo */}
             <div className="flex-1 flex justify-center">
-              {logoUrl ? (
-                <img src={logoUrl} alt="Logo" className="max-h-14 max-w-[180px] object-contain" />
-              ) : (
-                <div className="text-xl font-bold" style={{ color: colors.cor_botoes_cabecalho }}>
-                  {storeConfig?.store_name || 'Minha Loja'}
-                </div>
-              )}
+              <div className="text-xl font-bold" style={{ color: colors.cor_botoes_cabecalho }}>
+                {storeName || 'Minha Loja'}
+              </div>
             </div>
 
             {/* Ícones */}
@@ -573,16 +548,16 @@ export default function EmbedPreviewPage({
 
         {/* Seções do Layout */}
         {layout.sections
-          .filter(s => s.visible)
+          .filter(s => s.enabled)
           .sort((a, b) => a.order - b.order)
           .map((section, index) => (
             <div key={`${section.type}-${index}`} className="section">
               
-              {/* Banner */}
-              {section.type === 'banner' && banners.length > 0 && (
+              {/* Banner Principal */}
+              {section.type === 'banner_principal' && banners.length > 0 && (
                 <div className="relative">
                   <img 
-                    src={banners[0]?.imageUrl || '/placeholder-banner.jpg'} 
+                    src={banners[0]?.image_desktop || '/placeholder-banner.jpg'} 
                     alt="Banner" 
                     className="w-full object-cover"
                     style={{ maxHeight: '400px' }}
@@ -625,8 +600,8 @@ export default function EmbedPreviewPage({
                 </div>
               )}
 
-              {/* Categorias */}
-              {section.type === 'categorias' && (
+              {/* Banner de Categorias */}
+              {section.type === 'banner_categorias' && (
                 <div className="py-6 px-4">
                   <h2 className="text-lg font-bold mb-4" style={{ color: colors.cor_detalhes_gerais }}>
                     Categorias
@@ -656,10 +631,10 @@ export default function EmbedPreviewPage({
         >
           <div className="text-center">
             <h3 className="text-lg font-bold text-white mb-2">
-              {storeConfig?.store_name || 'Minha Loja'}
+              {storeName || 'Minha Loja'}
             </h3>
             <p className="text-sm text-gray-300 mb-4">
-              {storeConfig?.footer_text || 'Sua loja online favorita'}
+              Sua loja online favorita
             </p>
             <div className="flex justify-center gap-4 mb-4">
               <a href="#" className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20">
@@ -673,7 +648,7 @@ export default function EmbedPreviewPage({
               </a>
             </div>
             <p className="text-xs text-gray-400">
-              © 2025 {storeConfig?.store_name || 'Minha Loja'}. Todos os direitos reservados.
+              © 2025 {storeName || 'Minha Loja'}. Todos os direitos reservados.
             </p>
           </div>
         </footer>
@@ -695,43 +670,45 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       return { notFound: true }
     }
 
-    // Buscar dados em paralelo
-    const [widgets, products, banners, storeConfig] = await Promise.all([
+    // Buscar dados em paralelo - passando theme.id
+    const [widgets, products, banners] = await Promise.all([
       getActiveWidgetsByTheme(theme.id),
-      getProducts(),
-      getDemoBanners(),
-      getStoreConfig()
+      getProducts(theme.id),
+      getBanners(theme.id),
     ])
 
-    // Cores
+    // Cores do tema - usando color_config
+    const colorConfig = (theme.color_config || {}) as Partial<ColorConfig>
     const colors: ColorConfig = {
-      cor_fundo_pagina: theme.cor_fundo_pagina || '#FFFFFF',
-      cor_detalhes_fundo: theme.cor_detalhes_fundo || '#F5F5F5',
-      cor_fundo_barra_superior: theme.cor_fundo_barra_superior || '#1a1a1a',
-      cor_botoes_cabecalho: theme.cor_botoes_cabecalho || '#333333',
-      cor_fundo_cabecalho: theme.cor_fundo_cabecalho || '#FFFFFF',
-      cor_botao_enviar_pedido: theme.cor_botao_enviar_pedido || '#22c55e',
-      cor_demais_botoes: theme.cor_demais_botoes || '#3b82f6',
-      cor_detalhes_gerais: theme.cor_detalhes_gerais || '#333333',
-      cor_fundo_banner_catalogo: theme.cor_fundo_banner_catalogo || '#f0f0f0',
-      cor_fundo_menu_desktop: theme.cor_fundo_menu_desktop || '#FFFFFF',
-      cor_fundo_submenu_desktop: theme.cor_fundo_submenu_desktop || '#F5F5F5',
-      cor_fundo_menu_mobile: theme.cor_fundo_menu_mobile || '#FFFFFF',
-      cor_fundo_rodape: theme.cor_fundo_rodape || '#1a1a1a',
+      cor_fundo_pagina: colorConfig.cor_fundo_pagina || '#FFFFFF',
+      cor_detalhes_fundo: colorConfig.cor_detalhes_fundo || '#F5F5F5',
+      cor_fundo_barra_superior: colorConfig.cor_fundo_barra_superior || '#1a1a1a',
+      cor_botoes_cabecalho: colorConfig.cor_botoes_cabecalho || '#333333',
+      cor_fundo_cabecalho: colorConfig.cor_fundo_cabecalho || '#FFFFFF',
+      cor_botao_enviar_pedido: colorConfig.cor_botao_enviar_pedido || '#22c55e',
+      cor_demais_botoes: colorConfig.cor_demais_botoes || '#3b82f6',
+      cor_detalhes_gerais: colorConfig.cor_detalhes_gerais || '#333333',
+      cor_fundo_banner_catalogo: colorConfig.cor_fundo_banner_catalogo || '#f0f0f0',
+      cor_fundo_menu_desktop: colorConfig.cor_fundo_menu_desktop || '#FFFFFF',
+      cor_fundo_submenu_desktop: colorConfig.cor_fundo_submenu_desktop || '#F5F5F5',
+      cor_fundo_menu_mobile: colorConfig.cor_fundo_menu_mobile || '#FFFFFF',
+      cor_fundo_rodape: colorConfig.cor_fundo_rodape || '#1a1a1a',
     }
 
-    // Layout
-    const layout: LayoutConfig = theme.layout_config || {
+    // Layout do tema
+    const defaultLayout: LayoutConfig = {
       sections: [
-        { type: 'banner', visible: true, order: 1, config: {} },
-        { type: 'categorias', visible: true, order: 2, config: {} },
-        { type: 'widgets', visible: true, order: 3, config: {} },
-        { type: 'produtos', visible: true, order: 4, config: {} },
-      ]
+        { id: 'banner', type: 'banner_principal', label: 'Banner Principal', enabled: true, order: 1 },
+        { id: 'categorias', type: 'banner_categorias', label: 'Categorias', enabled: true, order: 2 },
+        { id: 'widgets', type: 'widgets', label: 'Widgets', enabled: true, order: 3 },
+        { id: 'produtos', type: 'produtos', label: 'Produtos', enabled: true, order: 4 },
+      ],
+      products_per_row: 4
     }
+    const layout: LayoutConfig = theme.layout_config || defaultLayout
 
     // CSS injetado
-    const injectedCss = generateBaseCss(theme)
+    const injectedCss = generateBaseCss(colors)
 
     return {
       props: {
@@ -746,7 +723,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         widgets: widgets || [],
         products: products || [],
         banners: banners || [],
-        storeConfig: storeConfig || null
+        storeName: theme.name
       }
     }
   } catch (error) {
