@@ -45,12 +45,42 @@ export type CarouselStyleConfig = {
   card_shadow: 'none' | 'sm' | 'md' | 'lg'      // Sombra do card
 }
 
+// Lista de fontes disponíveis (Google Fonts)
+export const AVAILABLE_FONTS = [
+  'Poppins', 'Oswald', 'Roboto', 'Lato', 'Cabin', 'Open Sans', 
+  'Montserrat', 'Lora', 'Arvo', 'Josefin Slab', 'Merriweather',
+  'Playfair Display', 'Quicksand', 'Playwrite', 'Cookie', 'Merienda',
+  'Comic Neue', 'Rokkit', 'Raleway', 'Barlow Semi Condensed'
+] as const
+
+export type FontName = typeof AVAILABLE_FONTS[number]
+
+// Configuração de fontes do tema
+export type FontConfig = {
+  title_font: FontName      // Fonte para títulos, cabeçalhos e textos em destaque
+  body_font: FontName       // Fonte para demais textos
+}
+
+// Modelo de cabeçalho disponível
+export type HeaderModel = '1' | '2' | '3' | '4' | '5' | '6'
+
+// Configuração do cabeçalho
+export type HeaderConfig = {
+  model: HeaderModel        // Modelo do cabeçalho (1-6)
+  show_search: boolean      // Mostrar barra de busca
+  show_cart: boolean        // Mostrar carrinho
+  show_account: boolean     // Mostrar conta/login
+  show_whatsapp: boolean    // Mostrar ícone WhatsApp
+}
+
 // Configuração de layout do tema
 export type LayoutConfig = {
   sections: LayoutSection[]
   products_per_row: number  // 4, 5 ou 6 produtos por linha
   logo_url?: string  // URL da logomarca
   carousel_style?: CarouselStyleConfig // Estilos do carrossel
+  fonts?: FontConfig  // Configuração de fontes
+  header?: HeaderConfig  // Configuração do cabeçalho
 }
 
 // Tema - representa um tema disponível na plataforma

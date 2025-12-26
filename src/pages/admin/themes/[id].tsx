@@ -19,12 +19,13 @@ import {
   upsertCssByPage
 } from '@/lib/supabase/themes'
 import { getProducts, getDemoBanners, createDemoBanner, updateDemoBanner, deleteDemoBanner } from '@/lib/supabase/store'
-import type { Theme, ThemeWidget, ThemeBanner, ColorConfig, PageType, LayoutConfig, LayoutSection } from '@/lib/types'
+import type { Theme, ThemeWidget, ThemeBanner, ColorConfig, PageType, LayoutConfig, LayoutSection, FontConfig, HeaderConfig, FontName, HeaderModel } from '@/lib/types'
+import { AVAILABLE_FONTS } from '@/lib/types'
 import type { DemoProduct, DemoBanner } from '@/lib/supabase/store'
 import { ProductsTab, BannersTab } from '@/components/admin'
 import AdminLayout, { Card } from '@/components/admin/AdminLayout'
 
-type TabType = 'info' | 'layout' | 'cores' | 'produtos' | 'banners' | 'widgets' | 'css'
+type TabType = 'info' | 'layout' | 'fontes' | 'cabecalho' | 'cores' | 'produtos' | 'banners' | 'widgets' | 'css'
 
 // Cores padrão - exatamente como na plataforma
 const defaultColors: ColorConfig = {
@@ -119,6 +120,17 @@ export default function EditThemePage() {
       button_style: 'full',
       show_badge: true,
       card_shadow: 'sm'
+    },
+    fonts: {
+      title_font: 'Poppins',
+      body_font: 'Poppins'
+    },
+    header: {
+      model: '1',
+      show_search: true,
+      show_cart: true,
+      show_account: true,
+      show_whatsapp: false
     }
   }
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>(defaultLayoutConfig)
@@ -521,6 +533,8 @@ export default function EditThemePage() {
   const tabs: { id: TabType; label: string }[] = [
     { id: 'info', label: 'Informações' },
     { id: 'layout', label: 'Layout' },
+    { id: 'fontes', label: 'Fontes' },
+    { id: 'cabecalho', label: 'Cabeçalho' },
     { id: 'cores', label: 'Cores' },
     { id: 'produtos', label: 'Produtos' },
     { id: 'banners', label: 'Banners' },
@@ -592,6 +606,8 @@ export default function EditThemePage() {
           const icons: Record<TabType, React.ReactNode> = {
             info: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
             layout: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>,
+            fontes: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" /></svg>,
+            cabecalho: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z" /></svg>,
             cores: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>,
             produtos: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>,
             banners: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
@@ -1011,25 +1027,23 @@ export default function EditThemePage() {
                         {section.enabled ? '✓ Ativo' : 'Inativo'}
                       </button>
                       
-                      {/* Botão deletar - permite excluir qualquer seção exceto as essenciais */}
-                      {!['banner_principal', 'produtos'].includes(section.id) && (
-                        <button 
-                          onClick={() => {
-                            if (confirm(`Excluir a seção "${section.label}"?`)) {
-                              const newSections = layoutConfig.sections.filter(s => s.id !== section.id)
-                              newSections.forEach((s, i) => s.order = i + 1)
-                              setLayoutConfig({ ...layoutConfig, sections: newSections })
-                              showMessage('success', 'Seção excluída!')
-                            }
-                          }}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                          title="Excluir seção"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
+                      {/* Botão deletar - permite excluir QUALQUER seção */}
+                      <button 
+                        onClick={() => {
+                          if (confirm(`Excluir a seção "${section.label}"?`)) {
+                            const newSections = layoutConfig.sections.filter(s => s.id !== section.id)
+                            newSections.forEach((s, i) => s.order = i + 1)
+                            setLayoutConfig({ ...layoutConfig, sections: newSections })
+                            showMessage('success', 'Seção excluída!')
+                          }
+                        }}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                        title="Excluir seção"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1918,6 +1932,365 @@ export default function EditThemePage() {
               </div>
             </div>
           </Card>
+        )}
+
+        {/* Tab Fontes */}
+        {activeTab === 'fontes' && (
+          <div className="space-y-6">
+            <Card>
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
+                    </svg>
+                  </span>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">Tipografia</h2>
+                    <p className="text-sm text-slate-500">Configure as fontes do seu tema</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Fonte dos Títulos */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-semibold text-slate-700">
+                      Fonte dos Títulos
+                    </label>
+                    <select
+                      value={layoutConfig.fonts?.title_font || 'Poppins'}
+                      onChange={e => setLayoutConfig({
+                        ...layoutConfig,
+                        fonts: {
+                          ...layoutConfig.fonts,
+                          title_font: e.target.value as FontName,
+                          body_font: layoutConfig.fonts?.body_font || 'Poppins'
+                        }
+                      })}
+                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-purple-100 focus:border-purple-500 transition-all"
+                    >
+                      {AVAILABLE_FONTS.map(font => (
+                        <option key={font} value={font}>{font}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-slate-500">
+                      Usada em títulos de seções, nomes de produtos, cabeçalhos
+                    </p>
+                    <div 
+                      className="p-4 bg-slate-100 rounded-lg border border-slate-200"
+                      style={{ fontFamily: `'${layoutConfig.fonts?.title_font || 'Poppins'}', sans-serif` }}
+                    >
+                      <span className="text-2xl font-bold text-slate-800">Exemplo de Título</span>
+                    </div>
+                  </div>
+
+                  {/* Fonte dos Demais Textos */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-semibold text-slate-700">
+                      Fonte dos Demais Textos
+                    </label>
+                    <select
+                      value={layoutConfig.fonts?.body_font || 'Poppins'}
+                      onChange={e => setLayoutConfig({
+                        ...layoutConfig,
+                        fonts: {
+                          ...layoutConfig.fonts,
+                          title_font: layoutConfig.fonts?.title_font || 'Poppins',
+                          body_font: e.target.value as FontName
+                        }
+                      })}
+                      className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-purple-100 focus:border-purple-500 transition-all"
+                    >
+                      {AVAILABLE_FONTS.map(font => (
+                        <option key={font} value={font}>{font}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-slate-500">
+                      Usada em descrições, preços, botões, textos gerais
+                    </p>
+                    <div 
+                      className="p-4 bg-slate-100 rounded-lg border border-slate-200"
+                      style={{ fontFamily: `'${layoutConfig.fonts?.body_font || 'Poppins'}', sans-serif` }}
+                    >
+                      <span className="text-base text-slate-600">Este é um exemplo de texto do corpo. Descrição de produtos, preços e outros textos.</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Combinações Populares */}
+                <div className="mt-8 pt-6 border-t border-slate-200">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                    <span className="text-lg">✨</span>
+                    Combinações Populares
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {([
+                      { title: 'Montserrat' as FontName, body: 'Open Sans' as FontName, name: 'Moderna' },
+                      { title: 'Playfair Display' as FontName, body: 'Lato' as FontName, name: 'Elegante' },
+                      { title: 'Poppins' as FontName, body: 'Poppins' as FontName, name: 'Clean' },
+                      { title: 'Oswald' as FontName, body: 'Roboto' as FontName, name: 'Impactante' },
+                      { title: 'Raleway' as FontName, body: 'Quicksand' as FontName, name: 'Suave' },
+                      { title: 'Lora' as FontName, body: 'Cabin' as FontName, name: 'Minimalista' },
+                    ]).map(combo => (
+                      <button
+                        key={combo.name}
+                        onClick={() => setLayoutConfig({
+                          ...layoutConfig,
+                          fonts: {
+                            title_font: combo.title,
+                            body_font: combo.body
+                          }
+                        })}
+                        className={`p-4 rounded-xl border-2 text-left transition-all hover:border-purple-300 hover:bg-purple-50 ${
+                          layoutConfig.fonts?.title_font === combo.title && layoutConfig.fonts?.body_font === combo.body
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-slate-200 bg-white'
+                        }`}
+                      >
+                        <span className="text-xs font-medium text-purple-600 uppercase tracking-wide">{combo.name}</span>
+                        <div className="mt-2" style={{ fontFamily: `'${combo.title}', sans-serif` }}>
+                          <span className="text-lg font-bold text-slate-800">Título</span>
+                        </div>
+                        <div style={{ fontFamily: `'${combo.body}', sans-serif` }}>
+                          <span className="text-sm text-slate-500">Texto do corpo</span>
+                        </div>
+                        <div className="mt-2 text-xs text-slate-400">
+                          {combo.title} + {combo.body}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Botão Salvar */}
+                <div className="mt-8 pt-6 border-t border-slate-200">
+                  <button 
+                    onClick={handleSaveLayout} 
+                    disabled={saving} 
+                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-base font-semibold rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30 flex items-center justify-center gap-2"
+                  >
+                    {saving ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Salvar Fontes
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Tab Cabeçalho */}
+        {activeTab === 'cabecalho' && (
+          <div className="space-y-6">
+            <Card>
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z" />
+                    </svg>
+                  </span>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">Modelo do Cabeçalho</h2>
+                    <p className="text-sm text-slate-500">Escolha o layout do header da sua loja</p>
+                  </div>
+                </div>
+
+                {/* Grid de Modelos */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(['1', '2', '3', '4', '5', '6'] as HeaderModel[]).map(model => (
+                    <button
+                      key={model}
+                      onClick={() => setLayoutConfig({
+                        ...layoutConfig,
+                        header: { 
+                          model: model,
+                          show_search: layoutConfig.header?.show_search ?? true,
+                          show_cart: layoutConfig.header?.show_cart ?? true,
+                          show_account: layoutConfig.header?.show_account ?? true,
+                          show_whatsapp: layoutConfig.header?.show_whatsapp ?? false
+                        }
+                      })}
+                      className={`relative p-4 rounded-xl border-2 transition-all hover:border-blue-300 hover:bg-blue-50 ${
+                        (layoutConfig.header?.model || '1') === model
+                          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                          : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      {/* Badge de selecionado */}
+                      {(layoutConfig.header?.model || '1') === model && (
+                        <span className="absolute top-2 right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </span>
+                      )}
+
+                      {/* Preview do Header */}
+                      <div className="aspect-[16/5] bg-slate-800 rounded-lg overflow-hidden mb-3">
+                        {/* Modelo 1: Logo esquerda, busca centro, ícones direita */}
+                        {model === '1' && (
+                          <div className="h-full flex items-center justify-between px-3">
+                            <div className="w-16 h-4 bg-white/30 rounded"></div>
+                            <div className="w-24 h-3 bg-white/20 rounded-full"></div>
+                            <div className="flex gap-1">
+                              <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                              <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                            </div>
+                          </div>
+                        )}
+                        {/* Modelo 2: Logo centro, busca e ícones nas laterais */}
+                        {model === '2' && (
+                          <div className="h-full flex items-center justify-between px-3">
+                            <div className="w-20 h-3 bg-white/20 rounded-full"></div>
+                            <div className="w-16 h-5 bg-white/30 rounded"></div>
+                            <div className="flex gap-1">
+                              <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                              <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                            </div>
+                          </div>
+                        )}
+                        {/* Modelo 3: Duas linhas - logo e ícones em cima, busca embaixo */}
+                        {model === '3' && (
+                          <div className="h-full flex flex-col justify-center px-3 gap-1">
+                            <div className="flex items-center justify-between">
+                              <div className="w-14 h-3 bg-white/30 rounded"></div>
+                              <div className="flex gap-1">
+                                <div className="w-2.5 h-2.5 bg-white/30 rounded-full"></div>
+                                <div className="w-2.5 h-2.5 bg-white/30 rounded-full"></div>
+                              </div>
+                            </div>
+                            <div className="w-full h-2.5 bg-white/20 rounded-full"></div>
+                          </div>
+                        )}
+                        {/* Modelo 4: Logo centro em cima, menu abaixo */}
+                        {model === '4' && (
+                          <div className="h-full flex flex-col justify-center items-center px-3 gap-1">
+                            <div className="w-16 h-4 bg-white/30 rounded"></div>
+                            <div className="flex gap-2">
+                              <div className="w-8 h-1.5 bg-white/20 rounded"></div>
+                              <div className="w-8 h-1.5 bg-white/20 rounded"></div>
+                              <div className="w-8 h-1.5 bg-white/20 rounded"></div>
+                            </div>
+                          </div>
+                        )}
+                        {/* Modelo 5: Compacto com menu hamburger */}
+                        {model === '5' && (
+                          <div className="h-full flex items-center justify-between px-3">
+                            <div className="flex flex-col gap-0.5">
+                              <div className="w-3 h-0.5 bg-white/30 rounded"></div>
+                              <div className="w-3 h-0.5 bg-white/30 rounded"></div>
+                              <div className="w-3 h-0.5 bg-white/30 rounded"></div>
+                            </div>
+                            <div className="w-14 h-4 bg-white/30 rounded"></div>
+                            <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                          </div>
+                        )}
+                        {/* Modelo 6: Full width com tudo em uma linha */}
+                        {model === '6' && (
+                          <div className="h-full flex items-center px-3 gap-2">
+                            <div className="w-12 h-3 bg-white/30 rounded"></div>
+                            <div className="flex-1 h-2.5 bg-white/20 rounded-full"></div>
+                            <div className="flex gap-1">
+                              <div className="w-2.5 h-2.5 bg-white/30 rounded-full"></div>
+                              <div className="w-2.5 h-2.5 bg-white/30 rounded-full"></div>
+                              <div className="w-2.5 h-2.5 bg-white/30 rounded-full"></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Nome do modelo */}
+                      <div className="text-center">
+                        <span className="text-sm font-semibold text-slate-700">Modelo {model}</span>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {model === '1' && 'Clássico'}
+                          {model === '2' && 'Logo Centralizada'}
+                          {model === '3' && 'Duas Linhas'}
+                          {model === '4' && 'Minimalista'}
+                          {model === '5' && 'Mobile First'}
+                          {model === '6' && 'Full Width'}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Descrição do modelo selecionado */}
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">
+                      {(layoutConfig.header?.model || '1') === '1' && '🏛️'}
+                      {(layoutConfig.header?.model || '1') === '2' && '🎯'}
+                      {(layoutConfig.header?.model || '1') === '3' && '📐'}
+                      {(layoutConfig.header?.model || '1') === '4' && '✨'}
+                      {(layoutConfig.header?.model || '1') === '5' && '📱'}
+                      {(layoutConfig.header?.model || '1') === '6' && '🌐'}
+                    </span>
+                    <div>
+                      <h4 className="font-semibold text-blue-800">
+                        Modelo {layoutConfig.header?.model || '1'} - {
+                          (layoutConfig.header?.model || '1') === '1' ? 'Clássico' :
+                          (layoutConfig.header?.model || '1') === '2' ? 'Logo Centralizada' :
+                          (layoutConfig.header?.model || '1') === '3' ? 'Duas Linhas' :
+                          (layoutConfig.header?.model || '1') === '4' ? 'Minimalista' :
+                          (layoutConfig.header?.model || '1') === '5' ? 'Mobile First' :
+                          'Full Width'
+                        }
+                      </h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        {(layoutConfig.header?.model || '1') === '1' && 'Layout tradicional com logo à esquerda, busca centralizada e ícones à direita. Ideal para lojas com muitas categorias.'}
+                        {(layoutConfig.header?.model || '1') === '2' && 'Logo em destaque no centro, com busca e ações nas laterais. Perfeito para marcas que querem destacar o branding.'}
+                        {(layoutConfig.header?.model || '1') === '3' && 'Header em duas linhas: informações principais em cima e busca expandida abaixo. Ótimo para lojas com busca frequente.'}
+                        {(layoutConfig.header?.model || '1') === '4' && 'Design limpo e minimalista com logo centralizada e menu simplificado. Ideal para lojas com poucos produtos.'}
+                        {(layoutConfig.header?.model || '1') === '5' && 'Otimizado para mobile com menu hamburger. Adapta-se perfeitamente a dispositivos móveis.'}
+                        {(layoutConfig.header?.model || '1') === '6' && 'Header expansivo que utiliza toda a largura. Ideal para lojas que querem maximizar o espaço de busca.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botão Salvar */}
+                <div className="mt-8 pt-6 border-t border-slate-200">
+                  <button 
+                    onClick={handleSaveLayout} 
+                    disabled={saving} 
+                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white text-base font-semibold rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 flex items-center justify-center gap-2"
+                  >
+                    {saving ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Salvar Cabeçalho
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </Card>
+          </div>
         )}
 
         {activeTab === 'css' && (

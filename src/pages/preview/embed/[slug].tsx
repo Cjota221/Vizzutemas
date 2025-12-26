@@ -1131,7 +1131,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       cor_fundo_rodape: colorConfig.cor_fundo_rodape || '#1a1a1a',
     }
 
-    // Layout do tema
+    // Layout do tema - usa o layout_config salvo ou o default
     const defaultLayout: LayoutConfig = {
       sections: [
         { id: 'banner', type: 'banner_principal', label: 'Banner Principal', enabled: true, order: 1 },
@@ -1141,7 +1141,15 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
       ],
       products_per_row: 4
     }
-    const layout: LayoutConfig = theme.layout_config || defaultLayout
+    
+    // Usar o layout salvo no banco OU o default
+    const savedLayout = theme.layout_config as LayoutConfig | undefined
+    const layout: LayoutConfig = savedLayout && savedLayout.sections && savedLayout.sections.length > 0 
+      ? savedLayout 
+      : defaultLayout
+    
+    // Debug: logar a ordem das seções
+    console.log('[PREVIEW] Layout sections:', layout.sections.map(s => `${s.order}:${s.type}:${s.label}`).join(', '))
 
     // CSS injetado = variáveis de cores + CSS customizado por página
     const baseCss = generateBaseCss(colors)
