@@ -521,31 +521,31 @@ export default function EditThemePage() {
   return (
     <AdminLayout title={`Editando: ${theme.name}`}>
       {/* Header Moderno */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 px-4 sm:px-6 lg:px-8 py-8 mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-8 mb-8 rounded-b-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
             <Link 
               href="/admin/themes" 
-              className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors"
+              className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors flex-shrink-0"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
               </svg>
             </Link>
-            <div>
-              <h1 className="text-2xl font-bold text-white">{theme.name}</h1>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-white truncate">{theme.name}</h1>
               <p className="text-sm text-slate-400 flex items-center gap-2 mt-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
-                /{theme.slug}
+                <span className="truncate">/{theme.slug}</span>
               </p>
             </div>
           </div>
           <a 
             href={`/preview/${theme.slug}`} 
             target="_blank" 
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 rounded-xl hover:bg-slate-100 transition-colors text-sm font-semibold shadow-lg"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-slate-900 rounded-xl hover:bg-slate-100 transition-colors text-sm font-semibold shadow-lg flex-shrink-0"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
