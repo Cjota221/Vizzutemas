@@ -329,7 +329,6 @@ export async function getBanners(themeId: string, position?: string): Promise<Th
     .select('*')
     .eq('theme_id', themeId)
     .eq('is_active', true)
-    .order('sort_order', { ascending: true })
   
   if (position) {
     query = query.eq('position', position)
