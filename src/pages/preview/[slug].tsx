@@ -6,7 +6,7 @@
  * baseadas no viewport do iframe (não do navegador).
  * 
  * Quando o usuário alterna para Mobile, o iframe é redimensionado
- * para 375px de largura, fazendo com que todos os @media queries
+ * para 430x932px (iPhone 14 Pro Max), fazendo com que todos os @media queries
  * dos widgets sejam acionados corretamente.
  */
 
@@ -31,9 +31,10 @@ export default function PreviewPage({ theme }: PreviewPageProps) {
 
   const isMobile = viewMode === 'mobile'
   
-  // Dimensões do preview
-  const previewWidth = isMobile ? 375 : '100%'
-  const previewMaxWidth = isMobile ? 375 : 1400
+  // Dimensões do preview - iPhone 14 Pro Max: 430x932
+  const previewWidth = isMobile ? 430 : '100%'
+  const previewMaxWidth = isMobile ? 430 : 1400
+  const mobileHeight = 932 // iPhone 14 Pro Max height
 
   // Escutar mensagens do iframe para ajustar altura
   useEffect(() => {
@@ -115,7 +116,7 @@ export default function PreviewPage({ theme }: PreviewPageProps) {
 
           {/* Indicador de tamanho */}
           <span className="text-xs text-gray-500 hidden sm:inline">
-            {isMobile ? '375 × ' + iframeHeight : '100%'}
+            {isMobile ? '430 × 932' : '100%'}
           </span>
 
           {/* Link para editar */}
@@ -160,10 +161,10 @@ export default function PreviewPage({ theme }: PreviewPageProps) {
             className={`bg-white ${isMobile ? 'rounded-[28px]' : ''}`}
             style={{
               width: '100%',
-              height: iframeHeight,
+              height: isMobile ? mobileHeight : iframeHeight,
               border: 'none',
               display: 'block',
-              overflow: 'hidden',
+              overflow: isMobile ? 'auto' : 'hidden',
             }}
             title={`Preview de ${theme.name}`}
             sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
@@ -181,7 +182,7 @@ export default function PreviewPage({ theme }: PreviewPageProps) {
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${isMobile ? 'bg-green-500' : 'bg-blue-500'}`} />
           <span>
-            {isMobile ? 'Mobile View (375px)' : 'Desktop View'}
+            {isMobile ? 'Mobile View (430px - iPhone 14 Pro Max)' : 'Desktop View'}
           </span>
         </div>
         <div className="text-gray-400 mt-1">

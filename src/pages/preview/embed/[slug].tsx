@@ -708,8 +708,19 @@ export default function EmbedPreviewPage({
   widgets,
   products,
   banners,
-  storeName
-}: EmbedPreviewProps) {
+  storeName,
+  logoUrl
+}: {
+  theme: { id: string; name: string; slug: string }
+  colors: ColorConfig
+  layout: LayoutConfig
+  injectedCss: string
+  widgets: ThemeWidget[]
+  products: DemoProduct[]
+  banners: ThemeBanner[]
+  storeName: string
+  logoUrl: string | null
+}) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [cartCount, setCartCount] = useState(0)
 
@@ -791,9 +802,17 @@ export default function EmbedPreviewPage({
 
             {/* Logo */}
             <div className="flex-1 flex justify-center">
-              <div className="text-xl font-bold" style={{ color: colors.cor_botoes_cabecalho }}>
-                {storeName || 'Minha Loja'}
-              </div>
+              {logoUrl ? (
+                <img 
+                  src={logoUrl} 
+                  alt={storeName || 'Logo da Loja'} 
+                  className="h-10 max-h-10 w-auto object-contain"
+                />
+              ) : (
+                <div className="text-xl font-bold" style={{ color: colors.cor_botoes_cabecalho }}>
+                  {storeName || 'Minha Loja'}
+                </div>
+              )}
             </div>
 
             {/* Ícones */}
@@ -1027,7 +1046,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
         widgets: widgets || [],
         products: products || [],
         banners: banners || [],
-        storeName: theme.name
+        storeName: theme.name,
+        logoUrl: layout.logo_url || null
       }
     }
   } catch (error) {
