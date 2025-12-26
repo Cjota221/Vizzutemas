@@ -453,6 +453,42 @@ function WidgetRenderer({
       setTimeout(removeProblematicElements, 3000)
       
       // ========================================
+      // 🔴 REMOVER OVERLAYS BRANCOS
+      // ========================================
+      const removeWhiteOverlays = () => {
+        // Buscar elementos que podem ser overlays brancos
+        const allElements = document.querySelectorAll('div, section, span')
+        allElements.forEach(el => {
+          const style = window.getComputedStyle(el)
+          const rect = el.getBoundingClientRect()
+          
+          // Se o elemento cobre grande parte da tela
+          if (rect.width > window.innerWidth * 0.9 && rect.height > window.innerHeight * 0.9) {
+            const bgColor = style.backgroundColor
+            const zIndex = parseInt(style.zIndex) || 0
+            
+            // Se tem fundo branco ou transparente e z-index alto, pode ser um overlay
+            if (zIndex > 100 || style.position === 'fixed' || style.position === 'absolute') {
+              // Verificar se está acima do conteúdo
+              if (rect.top <= 0 && rect.left <= 0) {
+                console.warn(`🔴 [SANDBOX] Detectado possível overlay: ${el.tagName}.${el.className}, bg: ${bgColor}, z: ${zIndex}, pos: ${style.position}`)
+                
+                // Se parece ser um overlay problemático, esconder
+                if (style.position === 'fixed' || (zIndex > 500)) {
+                  console.warn(`🔴 [SANDBOX] REMOVENDO overlay: ${el.tagName}.${el.className}`)
+                  ;(el as HTMLElement).style.display = 'none'
+                }
+              }
+            }
+          }
+        })
+      }
+      
+      // Executar detecção de overlays brancos
+      setTimeout(removeWhiteOverlays, 500)
+      setTimeout(removeWhiteOverlays, 2000)
+
+      // ========================================
       // 🧹 CLEANUP
       // ========================================
       return () => {
