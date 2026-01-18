@@ -198,13 +198,13 @@ function ProductCarousel({
       <div 
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide"
+        className="flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide md:grid md:grid-cols-4 lg:grid-cols-5 md:gap-5 md:overflow-visible"
         style={{ scrollSnapType: 'x mandatory', scrollBehavior: 'smooth' }}
       >
         {displayProducts.map((product, idx) => (
           <div 
             key={`${product.id}-${idx}`} 
-            className={`flex-shrink-0 w-40 rounded-xl overflow-hidden ${shadowClass}`}
+            className={`shrink-0 w-44 md:w-full rounded-xl overflow-hidden flex flex-col ${shadowClass}`}
             style={{ backgroundColor: colors.cor_detalhes_fundo, scrollSnapAlign: 'start' }}
           >
             <div className="relative aspect-square">
@@ -218,27 +218,46 @@ function ProductCarousel({
                 </span>
               )}
             </div>
-            <div className="p-3">
-              <h3 className={`${productNameSizeClass} font-medium truncate text-gray-800`}>{product.name}</h3>
-              <div className="mt-1">
+            <div className="p-3 md:p-4 flex flex-col flex-1">
+              <h3 
+                className="font-medium text-gray-800"
+                style={{ 
+                  fontSize: 'clamp(0.875rem, 0.75rem + 0.5vw, 1.125rem)',
+                  lineHeight: '1.4',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  minHeight: '2.8em'
+                }}
+              >
+                {product.name}
+              </h3>
+              <div className="mt-2 flex-1">
                 {product.original_price ? (
-                  <>
-                    <span className="text-xs text-gray-400 line-through">
+                  <div className="flex flex-col">
+                    <span className="text-xs md:text-sm text-gray-400 line-through">
                       R$ {product.original_price.toFixed(2)}
                     </span>
-                    <span className={`ml-1 font-bold ${priceSizeClass}`} style={{ color: colors.cor_botao_enviar_pedido }}>
+                    <span 
+                      className="font-bold text-base md:text-lg lg:text-xl" 
+                      style={{ color: colors.cor_botao_enviar_pedido }}
+                    >
                       R$ {product.price.toFixed(2)}
                     </span>
-                  </>
+                  </div>
                 ) : (
-                  <span className={`font-bold ${priceSizeClass}`} style={{ color: colors.cor_detalhes_gerais }}>
+                  <span 
+                    className="font-bold text-base md:text-lg lg:text-xl block" 
+                    style={{ color: colors.cor_detalhes_gerais }}
+                  >
                     R$ {product.price.toFixed(2)}
                   </span>
                 )}
               </div>
               <button 
                 onClick={onAddCart}
-                className="mt-2 w-full py-2 rounded-lg text-xs font-bold transition hover:opacity-90"
+                className="mt-3 w-full py-2.5 md:py-3 rounded-lg text-sm md:text-base font-bold transition hover:opacity-90"
                 style={getButtonStyle()}
               >
                 {btnText}
@@ -285,6 +304,30 @@ html, body {
   margin: 0;
   padding: 0;
   overflow-y: auto !important;
+}
+
+/* Esconder scrollbar mas permitir scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Cards de produtos - alinhamento consistente */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.product-card .product-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.product-card .product-info button {
+  margin-top: auto;
 }
 
 /* ========================================
