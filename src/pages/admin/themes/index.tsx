@@ -109,6 +109,11 @@ export default function AdminThemes({ themes }: Props) {
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const themes = await listThemes()
-  return { props: { themes: themes || [] } }
+  try {
+    const themes = await listThemes()
+    return { props: { themes: themes || [] } }
+  } catch (error) {
+    console.error('Erro no getServerSideProps de admin/themes:', error)
+    return { props: { themes: [] } }
+  }
 }

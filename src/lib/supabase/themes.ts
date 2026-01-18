@@ -41,13 +41,13 @@ export async function getThemeBySlug(slug: string): Promise<Theme | null> {
     .select('*')
     .eq('slug', slug)
     .limit(1)
-    .single()
+    .maybeSingle()
   
   if (error) {
     console.error('Erro ao buscar tema por slug:', error)
     return null
   }
-  return data as Theme
+  return data as Theme | null
 }
 
 // Busca um tema pelo ID
@@ -57,13 +57,13 @@ export async function getThemeById(id: string): Promise<Theme | null> {
     .select('*')
     .eq('id', id)
     .limit(1)
-    .single()
+    .maybeSingle()
   
   if (error) {
     console.error('Erro ao buscar tema por id:', error)
     return null
   }
-  return data as Theme
+  return data as Theme | null
 }
 
 // Cria um novo tema
@@ -105,16 +105,16 @@ export async function updateTheme(id: string, payload: Partial<Theme>): Promise<
 export async function getCssByPage(theme_id: string, page_type: PageType): Promise<ThemeCSS | null> {
   console.log(`[CSS] Buscando CSS para tema ${theme_id}, página ${page_type}`)
   
-  // Tenta buscar por theme_id E page_type
+  // Tenta buscar por theme_id E page_type - usa maybeSingle() para não dar erro 406 quando não encontra
   const { data, error } = await supabase
     .from('theme_css')
     .select('*')
     .eq('theme_id', theme_id)
     .eq('page_type', page_type)
     .limit(1)
-    .single()
+    .maybeSingle()
   
-  if (error && error.code !== 'PGRST116') { // Ignora erro de não encontrado
+  if (error) {
     // Se der erro de coluna não existir, tenta buscar sem page_type
     if (error.code === '42703') {
       console.log('[CSS] Coluna page_type não existe, tentando buscar CSS global')
@@ -123,9 +123,9 @@ export async function getCssByPage(theme_id: string, page_type: PageType): Promi
         .select('*')
         .eq('theme_id', theme_id)
         .limit(1)
-        .single()
+        .maybeSingle()
       
-      if (globalError && globalError.code !== 'PGRST116') {
+      if (globalError) {
         console.error('[CSS] Erro ao buscar CSS global:', globalError)
         return null
       }

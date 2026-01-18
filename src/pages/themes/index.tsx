@@ -76,6 +76,11 @@ export default function ThemesPage({ themes }: Props) {
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const themes = await listPublishedThemes()
-  return { props: { themes } }
+  try {
+    const themes = await listPublishedThemes()
+    return { props: { themes: themes || [] } }
+  } catch (error) {
+    console.error('Erro no getServerSideProps de themes:', error)
+    return { props: { themes: [] } }
+  }
 }

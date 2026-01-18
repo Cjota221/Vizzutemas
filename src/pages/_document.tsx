@@ -4,6 +4,10 @@ export default function Document() {
   return (
     <Html lang="pt-BR">
       <Head>
+        {/* Favicon */}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        
         {/* Bootstrap 4 CSS */}
         <link 
           rel="stylesheet" 

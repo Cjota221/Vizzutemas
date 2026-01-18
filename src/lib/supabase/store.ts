@@ -170,16 +170,18 @@ export async function getStoreConfig(themeId: string): Promise<StoreConfig | nul
     .from('store_config')
     .select('*')
     .eq('theme_id', themeId)
-    .single()
+    .maybeSingle()
   
   if (error) {
-    if (error.code === 'PGRST116') {
-      // Não existe, criar config padrão
-      return createDefaultStoreConfig(themeId)
-    }
     console.error('Erro ao buscar config:', error)
     return null
   }
+  
+  // Se não encontrou, criar config padrão
+  if (!data) {
+    return createDefaultStoreConfig(themeId)
+  }
+  
   return data as StoreConfig
 }
 

@@ -143,6 +143,11 @@ export default function AdminOrders({ orders: initialOrders }: Props) {
 }
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const orders = await listOrders()
-  return { props: { orders } }
+  try {
+    const orders = await listOrders()
+    return { props: { orders: orders || [] } }
+  } catch (error) {
+    console.error('Erro no getServerSideProps de orders:', error)
+    return { props: { orders: [] } }
+  }
 }

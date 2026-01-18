@@ -14,218 +14,12 @@ import { getProducts, getBanners } from '@/lib/supabase/store'
 import { ColorConfig, LayoutConfig, CarouselStyleConfig } from '@/lib/types'
 import type { DemoProduct, ThemeBanner } from '@/lib/supabase/store'
 
-// Tipo para widget
-type ThemeWidget = {
-  id: string
-  theme_id: string
-  name: string
-  widget_type: string
-  html_content?: string
-  display_order: number
-  is_active: boolean
-}
+// Importar o novo WidgetRenderer com sanitização e Error Boundary
+import WidgetRenderer from '@/components/WidgetRenderer'
+import type { ThemeWidget } from '@/components/WidgetRenderer'
 
 // ========================================
-// 🛡️ WIDGET RENDERER
-// ========================================
-function WidgetRenderer({ 
-  widget, 
-  colors
-}: { 
-  widget: ThemeWidget
-  colors: ColorConfig
-}) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [hasError, setHasError] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
-  
-  useEffect(() => {
-    if (!containerRef.current || !widget.html_content) return
-    
-    console.log(`🔧 [EMBED WIDGET] Carregando: "${widget.name}"`)
-    
-    try {
-      // 1. Separar HTML de Scripts e Links
-      let htmlClean = widget.html_content
-      
-      // Extrair scripts externos (com src)
-      const externalScripts: string[] = []
-      htmlClean = htmlClean.replace(/<script[^>]+src=["']([^"']+)["'][^>]*><\/script>/gi, (match, src) => {
-        externalScripts.push(src)
-        return ''
-      })
-      
-      // Extrair scripts inline
-      const inlineScripts: string[] = []
-      htmlClean = htmlClean.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, (match, code) => {
-        if (code.trim()) {
-          inlineScripts.push(code)
-        }
-        return ''
-      })
-      
-      // Extrair links de CSS externos
-      const externalCSS: string[] = []
-      htmlClean = htmlClean.replace(/<link[^>]+href=["']([^"']+\.css[^"']*)["'][^>]*\/?>/gi, (match, href) => {
-        externalCSS.push(href)
-        return ''
-      })
-      
-      // Extrair links de fontes do Google
-      htmlClean = htmlClean.replace(/<link[^>]+href=["'](https:\/\/fonts\.googleapis\.com[^"']+)["'][^>]*\/?>/gi, (match, href) => {
-        externalCSS.push(href)
-        return ''
-      })
-      
-      console.log(`📦 [WIDGET ${widget.name}] Scripts externos: ${externalScripts.length}, Inline: ${inlineScripts.length}, CSS: ${externalCSS.length}`)
-      
-      // 2. Carregar CSS externos primeiro
-      externalCSS.forEach(href => {
-        if (!document.querySelector(`link[href="${href}"]`)) {
-          const link = document.createElement('link')
-          link.rel = 'stylesheet'
-          link.href = href
-          document.head.appendChild(link)
-          console.log(`🎨 [CSS] Carregado: ${href}`)
-        }
-      })
-      
-      // 3. Inserir HTML limpo
-      containerRef.current.innerHTML = htmlClean
-      
-      // 4. Carregar scripts externos em sequência
-      const loadExternalScript = (src: string): Promise<void> => {
-        return new Promise((resolve, reject) => {
-          // Verificar se já foi carregado
-          if (document.querySelector(`script[src="${src}"]`)) {
-            console.log(`⏭️ [SCRIPT] Já carregado: ${src}`)
-            resolve()
-            return
-          }
-          
-          const script = document.createElement('script')
-          script.src = src
-          script.async = false
-          script.onload = () => {
-            console.log(`✅ [SCRIPT] Carregado: ${src}`)
-            resolve()
-          }
-          script.onerror = () => {
-            console.error(`❌ [SCRIPT] Erro ao carregar: ${src}`)
-            reject(new Error(`Failed to load ${src}`))
-          }
-          document.head.appendChild(script)
-        })
-      }
-      
-      // Carregar scripts externos em sequência, depois executar inline
-      const loadAllScripts = async () => {
-        // Carregar externos primeiro
-        for (const src of externalScripts) {
-          try {
-            await loadExternalScript(src)
-          } catch (e) {
-            console.error(e)
-          }
-        }
-        
-        // Aguardar um pouco para as bibliotecas inicializarem
-        await new Promise(resolve => setTimeout(resolve, 100))
-        
-        // Executar scripts inline
-        inlineScripts.forEach((code, index) => {
-          try {
-            // Usar Function para criar escopo isolado
-            const fn = new Function(code)
-            fn()
-            console.log(`✅ [INLINE ${index + 1}] Executado`)
-          } catch (error) {
-            console.error(`❌ [INLINE ${index + 1}] Erro:`, error)
-          }
-        })
-      }
-      
-      loadAllScripts()
-      
-      console.log(`✅ [EMBED WIDGET] "${widget.name}" carregado`)
-      
-      // 🎬 AUTOPLAY VÍDEOS
-      setTimeout(() => {
-        if (!containerRef.current) return
-        
-        const videos = containerRef.current.querySelectorAll('video')
-        videos.forEach((video) => {
-          video.setAttribute('autoplay', '')
-          video.setAttribute('playsinline', '')
-          video.setAttribute('muted', '')
-          video.muted = true
-          video.loop = true
-          video.play().catch(() => {})
-        })
-        
-        const iframes = containerRef.current.querySelectorAll('iframe')
-        iframes.forEach(iframe => {
-          const src = iframe.getAttribute('src') || ''
-          if ((src.includes('youtube') || src.includes('vimeo')) && !src.includes('autoplay')) {
-            const separator = src.includes('?') ? '&' : '?'
-            iframe.setAttribute('src', src + separator + 'autoplay=1&mute=1')
-          }
-        })
-      }, 1000)
-      
-    } catch (error) {
-      console.error(`❌ [EMBED WIDGET] ERRO:`, error)
-      setHasError(true)
-      setErrorMessage(`${error}`)
-    }
-  }, [widget.html_content, widget.id, widget.name])
-  
-  if (hasError) {
-    return (
-      <div style={{ padding: '20px', margin: '10px 0', backgroundColor: '#fee2e2', border: '1px solid #f87171', borderRadius: '8px' }}>
-        <p style={{ color: '#b91c1c', margin: 0 }}>⚠️ Widget "{widget.name}" com erro: {errorMessage}</p>
-      </div>
-    )
-  }
-  
-  return (
-    <div 
-      ref={containerRef}
-      className="widget"
-      data-widget-id={widget.id}
-      data-widget-name={widget.name}
-      style={{
-        position: 'relative',
-        isolation: 'isolate',
-        display: 'block',
-        width: '100%',
-        maxWidth: '100%',
-        boxSizing: 'border-box',
-        '--cor-fundo-pagina': colors.cor_fundo_pagina,
-        '--cor-detalhes-fundo': colors.cor_detalhes_fundo,
-        '--cor-fundo-barra-superior': colors.cor_fundo_barra_superior,
-        '--cor-botoes-cabecalho': colors.cor_botoes_cabecalho,
-        '--cor-fundo-cabecalho': colors.cor_fundo_cabecalho,
-        '--cor-botao-enviar-pedido': colors.cor_botao_enviar_pedido,
-        '--cor-demais-botoes': colors.cor_demais_botoes,
-        '--cor-detalhes-gerais': colors.cor_detalhes_gerais,
-        '--cor-fundo-banner-catalogo': colors.cor_fundo_banner_catalogo,
-        '--cor-fundo-menu-desktop': colors.cor_fundo_menu_desktop,
-        '--cor-fundo-submenu-desktop': colors.cor_fundo_submenu_desktop,
-        '--cor-fundo-menu-mobile': colors.cor_fundo_menu_mobile,
-        '--cor-fundo-rodape': colors.cor_fundo_rodape,
-        '--cor-primaria': colors.cor_detalhes_gerais,
-        '--cor-secundaria': colors.cor_demais_botoes,
-        '--cor-destaque': colors.cor_botao_enviar_pedido,
-        '--cor-fundo': colors.cor_fundo_pagina,
-        '--cor-texto': '#333333',
-      } as React.CSSProperties}
-    />
-  )
-}
-
-// ========================================
-// 🛒 CARROSSEL DE PRODUTOS
+//  CARROSSEL DE PRODUTOS
 // ========================================
 function ProductCarousel({ 
   title, 
@@ -490,6 +284,7 @@ html, body {
   max-width: 100vw !important;
   margin: 0;
   padding: 0;
+  overflow-y: auto !important;
 }
 
 /* ========================================
@@ -497,6 +292,26 @@ html, body {
    CRÍTICO: Widgets foram feitos para iframes separados
    Aqui forçamos cada um a ser contido em seu bloco
    ======================================== */
+
+/* ANULAR ESTILOS DOS WIDGETS QUE AFETAM BODY/HTML */
+.widget body,
+.widget html,
+body.widget-body,
+html.widget-html {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+/* Anular estilos de iframe que os widgets tentam aplicar */
+iframe.html-content-iframe,
+.fz-html-personalizado {
+  all: unset !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  position: relative !important;
+}
 
 /* Container de widgets em flex column */
 .widgets-section {
@@ -508,13 +323,21 @@ html, body {
   z-index: 1 !important;
 }
 
+/* Cada seção deve ser um bloco independente */
+.section {
+  position: relative !important;
+  display: block !important;
+  width: 100% !important;
+  clear: both !important;
+}
+
 /* ===========================================
    CADA WIDGET É UM BLOCO ISOLADO
    =========================================== */
 .widget {
   position: relative !important;
   isolation: isolate !important;
-  contain: layout style !important;
+  contain: layout style paint !important;
   display: block !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -535,6 +358,7 @@ html, body {
   height: auto !important;
   min-height: auto !important;
   max-height: none !important;
+  overflow: visible !important;
 }
 
 /* Containers com position absolute precisam ser relativos ao widget */
@@ -546,7 +370,7 @@ html, body {
 /* Anular position fixed - muito perigoso */
 .widget [style*="position: fixed"],
 .widget [style*="position:fixed"] {
-  position: absolute !important;
+  position: relative !important;
 }
 
 /* ===========================================
@@ -557,23 +381,24 @@ html, body {
   z-index: auto !important;
 }
 
-/* Exceções para elementos que precisam de z-index */
+/* Exceções para elementos que precisam de z-index DENTRO do widget */
 .widget .swiper-button-next,
 .widget .swiper-button-prev,
 .widget .swiper-pagination,
 .widget [class*="nav"],
 .widget [class*="arrow"],
 .widget [class*="btn"],
-.widget button {
+.widget button,
+.widget .vivaz-video-mute {
   z-index: 10 !important;
 }
 
-/* Modals e overlays podem ter z-index alto */
+/* Modals e overlays podem ter z-index alto DENTRO do widget */
 .widget [class*="modal"],
 .widget [class*="overlay"],
 .widget [class*="popup"],
 .widget [class*="dropdown"] {
-  z-index: 100 !important;
+  z-index: 50 !important;
 }
 
 /* ===========================================
@@ -614,35 +439,101 @@ html, body {
   display: block !important;
   width: 100% !important;
   height: auto !important;
-  overflow: hidden !important;
+  overflow: visible !important;
+  z-index: 1 !important;
 }
 
-/* CATEGORIAS */
+/* CATEGORIAS - layout flex para ícones */
 .widget .vivaz-cat-section {
   position: relative !important;
   min-height: 80px !important;
+  height: auto !important;
+  padding: 15px 0 !important;
 }
 
-/* BARRA DE VANTAGENS - altura fixa de 60px */
+.widget .vivaz-cat-section .vivaz-cat-grid,
+.widget .vivaz-cat-section .vivaz-container {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 20px !important;
+}
+
+/* BARRA DE VANTAGENS - altura automática, mínima de 60px */
 .widget .vivaz-trust-section {
   position: relative !important;
-  height: 60px !important;
   min-height: 60px !important;
-  max-height: 60px !important;
-  overflow: hidden !important;
+  height: auto !important;
+  padding: 10px 0 !important;
+  overflow: visible !important;
 }
 
-/* VIDEO PROVADOR */
+.widget .vivaz-trust-section .vivaz-trust-grid {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 15px !important;
+}
+
+/* VIDEO PROVADOR - layout flex responsivo */
 .widget .vivaz-single-video-section,
 .widget .vivaz-video-section {
   position: relative !important;
-  min-height: 300px !important;
+  min-height: auto !important;
+  height: auto !important;
+  padding: 30px 0 !important;
+}
+
+.widget .vivaz-single-video-section .vivaz-container,
+.widget .vivaz-video-section .vivaz-container {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 30px !important;
+  max-width: 1100px !important;
+  margin: 0 auto !important;
+  padding: 0 20px !important;
+}
+
+@media (max-width: 768px) {
+  .widget .vivaz-single-video-section .vivaz-container,
+  .widget .vivaz-video-section .vivaz-container {
+    flex-direction: column !important;
+  }
+}
+
+/* Vídeo dentro do widget provador */
+.widget .vivaz-video-area {
+  flex: 0 0 auto !important;
+  width: 350px !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 768px) {
+  .widget .vivaz-video-area {
+    width: 100% !important;
+    max-width: 300px !important;
+  }
+}
+
+.widget .vivaz-video-wrapper {
+  aspect-ratio: 9/16 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+/* Produtos ao lado do vídeo */
+.widget .vivaz-products-area {
+  flex: 1 !important;
+  min-width: 0 !important;
 }
 
 /* CARROSSEL DE BANNERS */
 .widget .vivaz-banner-section {
   position: relative !important;
   min-height: 200px !important;
+  height: auto !important;
 }
 
 .widget .vivaz-banner-section .swiper-slide {
@@ -658,28 +549,34 @@ html, body {
 /* COMPRE POR TAMANHO */
 .widget .vivaz-size-section {
   position: relative !important;
-  min-height: 200px !important;
+  min-height: auto !important;
+  height: auto !important;
+  padding: 30px 0 !important;
 }
 
-/* FAIXA DE CUPOM - altura fixa 48px */
+/* FAIXA DE CUPOM/MARQUEE - altura automática */
 .widget .vivaz-marquee-section {
   position: relative !important;
-  height: 48px !important;
-  min-height: 48px !important;
-  max-height: 48px !important;
+  min-height: 40px !important;
+  height: auto !important;
+  padding: 10px 0 !important;
   overflow: hidden !important;
 }
 
 /* CARROSSEL DE VIDEOS/REELS */
 .widget .vivaz-reels-section {
   position: relative !important;
-  min-height: 400px !important;
+  min-height: auto !important;
+  height: auto !important;
+  padding: 30px 0 !important;
 }
 
-/* FEEDBACKS */
+/* FEEDBACKS/SOCIAL */
 .widget .vivaz-social-section {
   position: relative !important;
-  min-height: 250px !important;
+  min-height: auto !important;
+  height: auto !important;
+  padding: 30px 0 !important;
 }
 
 /* ===========================================
@@ -751,23 +648,34 @@ html, body {
   flex-wrap: wrap !important;
 }
 
-/* Grid responsivo */
+/* Grid responsivo - mobile */
 @media (max-width: 768px) {
   .widget [style*="grid-template-columns"],
   .widget .grid {
     grid-template-columns: 1fr !important;
   }
   
-  .widget [style*="display: flex"] > *,
-  .widget .flex > * {
-    flex: 1 1 100% !important;
-    min-width: 0 !important;
+  /* Flex items no mobile devem ter wrap adequado */
+  .widget .vivaz-trust-grid > *,
+  .widget .vivaz-cat-grid > * {
+    flex: 0 0 auto !important;
+  }
+  
+  /* Vídeo provador empilhado no mobile */
+  .widget .vivaz-video-area {
+    width: 100% !important;
+    max-width: 280px !important;
+    margin: 0 auto !important;
+  }
+  
+  .widget .vivaz-products-area {
+    width: 100% !important;
   }
 }
 
 /* Neutralizar posicionamentos problemáticos */
 .widget [style*="position: fixed"] {
-  position: absolute !important;
+  position: relative !important;
 }
 
 .widget [style*="position: sticky"] {
@@ -792,6 +700,51 @@ html, body {
 .widget [class*="slider"] {
   max-width: 100% !important;
   overflow: hidden !important;
+}
+
+/* ===========================================
+   AJUSTES FINAIS PARA HARMONIA
+   =========================================== */
+
+/* Cards de produto dentro dos widgets */
+.widget .vivaz-product-card,
+.widget [class*="product-card"] {
+  background: white !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+}
+
+/* Texto legível */
+.widget h1, .widget h2, .widget h3,
+.widget h4, .widget h5, .widget h6 {
+  line-height: 1.3 !important;
+  margin: 0 0 10px 0 !important;
+}
+
+.widget p {
+  line-height: 1.5 !important;
+  margin: 0 0 10px 0 !important;
+}
+
+/* Botões nos widgets */
+.widget button,
+.widget .btn,
+.widget [class*="button"] {
+  cursor: pointer !important;
+  transition: opacity 0.2s !important;
+}
+
+.widget button:hover,
+.widget .btn:hover {
+  opacity: 0.9 !important;
+}
+
+/* ANULAR margin-bottom/top negativos que quebram layout */
+.widget [style*="margin-top: -"],
+.widget [style*="margin-bottom: -"] {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 `
 
@@ -840,9 +793,20 @@ export default function EmbedPreviewPage({
     return () => observer.disconnect()
   }, [])
 
-  // CSS de variáveis de cores
+  // Obter fontes do layout (ou usar padrão)
+  const titleFont = layout.fonts?.title_font || 'Poppins'
+  const bodyFont = layout.fonts?.body_font || 'Poppins'
+  
+  // Gerar URL do Google Fonts
+  const fontsToLoad = [...new Set([titleFont, bodyFont])]
+  const googleFontsUrl = `https://fonts.googleapis.com/css2?${fontsToLoad.map(font => 
+    `family=${font.replace(/\s+/g, '+')}:wght@400;500;600;700`
+  ).join('&')}&display=swap`
+
+  // CSS de variáveis de cores e fontes
   const colorVariablesCss = `
     :root {
+      /* Cores do Tema */
       --cor-fundo-pagina: ${colors.cor_fundo_pagina};
       --cor-detalhes-fundo: ${colors.cor_detalhes_fundo};
       --cor-fundo-barra-superior: ${colors.cor_fundo_barra_superior};
@@ -856,10 +820,32 @@ export default function EmbedPreviewPage({
       --cor-fundo-submenu-desktop: ${colors.cor_fundo_submenu_desktop};
       --cor-fundo-menu-mobile: ${colors.cor_fundo_menu_mobile};
       --cor-fundo-rodape: ${colors.cor_fundo_rodape};
+      
+      /* Aliases semânticos */
       --cor-primaria: ${colors.cor_detalhes_gerais};
       --cor-secundaria: ${colors.cor_demais_botoes};
       --cor-destaque: ${colors.cor_botao_enviar_pedido};
       --cor-fundo: ${colors.cor_fundo_pagina};
+      
+      /* Fontes do Tema */
+      --preview-font-title: '${titleFont}', -apple-system, BlinkMacSystemFont, sans-serif;
+      --preview-font-body: '${bodyFont}', -apple-system, BlinkMacSystemFont, sans-serif;
+      
+      /* Cores para preview.css */
+      --preview-color-primary: ${colors.cor_detalhes_gerais};
+      --preview-color-secondary: ${colors.cor_demais_botoes};
+      --preview-color-accent: ${colors.cor_botao_enviar_pedido};
+      --preview-color-background: ${colors.cor_fundo_pagina};
+      --preview-color-text: #333333;
+    }
+    
+    /* Aplicar fontes do tema */
+    body {
+      font-family: var(--preview-font-body);
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--preview-font-title);
     }
   `
 
@@ -868,11 +854,18 @@ export default function EmbedPreviewPage({
       <Head>
         <title>{`Preview - ${theme.name}`}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        
+        {/* Google Fonts dinâmicas do tema */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href={googleFontsUrl} rel="stylesheet" />
+        
+        {/* CSS: Variáveis + Contenção + Custom */}
         <style dangerouslySetInnerHTML={{ __html: colorVariablesCss + BASE_CONTAINMENT_CSS + injectedCss }} />
       </Head>
 
       {/* Conteúdo do Preview */}
-      <div style={{ backgroundColor: colors.cor_fundo_pagina }} className="min-h-screen">
+      <div style={{ backgroundColor: colors.cor_fundo_pagina, fontFamily: `'${bodyFont}', sans-serif` }} className="min-h-screen">
         
         {/* Barra Superior */}
         <div 
@@ -996,7 +989,7 @@ export default function EmbedPreviewPage({
                         .map(widgetId => widgets.find(w => w.id === widgetId))
                         .filter((w): w is ThemeWidget => w !== undefined && w.is_active)
                         .map(widget => (
-                          <WidgetRenderer key={widget.id} widget={widget} colors={colors} />
+                          <WidgetRenderer key={widget.id} widget={widget} colors={colors} fonts={layout.fonts} />
                         ))
                     } else {
                       // Fallback: se não tem widget_ids, tenta encontrar por nome na label
@@ -1006,7 +999,7 @@ export default function EmbedPreviewPage({
                           w.name.toLowerCase() === widgetName.toLowerCase() && w.is_active
                         )
                         if (matchingWidget) {
-                          return <WidgetRenderer key={matchingWidget.id} widget={matchingWidget} colors={colors} />
+                          return <WidgetRenderer key={matchingWidget.id} widget={matchingWidget} colors={colors} fonts={layout.fonts} />
                         }
                       }
                       // Se ainda não encontrou, renderiza todos (compatibilidade)
@@ -1014,7 +1007,7 @@ export default function EmbedPreviewPage({
                         .filter(w => w.is_active)
                         .sort((a, b) => a.display_order - b.display_order)
                         .map(widget => (
-                          <WidgetRenderer key={widget.id} widget={widget} colors={colors} />
+                          <WidgetRenderer key={widget.id} widget={widget} colors={colors} fonts={layout.fonts} />
                         ))
                     }
                   })()}

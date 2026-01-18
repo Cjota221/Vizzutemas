@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <text x="600" y="280" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">Tema Base</text>
+  <text x="600" y="340" font-family="Arial, sans-serif" font-size="24" fill="rgba(255,255,255,0.8)" text-anchor="middle">Design clean e profissional</text>
+  <rect x="450" y="400" width="300" height="50" rx="8" fill="white" opacity="0.9"/>
+  <text x="600" y="435" font-family="Arial, sans-serif" font-size="18" fill="#667eea" text-anchor="middle">Ver Preview</text>
+</svg>
