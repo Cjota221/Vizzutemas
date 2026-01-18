@@ -195,69 +195,73 @@ function ProductCarousel({
         </div>
       )}
 
+      {/* Grid de produtos - Desktop: grid fixo / Mobile: scroll horizontal */}
       <div 
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide md:grid md:grid-cols-4 lg:grid-cols-5 md:gap-5 md:overflow-visible"
-        style={{ scrollSnapType: 'x mandatory', scrollBehavior: 'smooth' }}
+        className="grid grid-cols-2 gap-3 px-4 pb-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 md:gap-4 lg:gap-5"
       >
-        {displayProducts.map((product, idx) => (
+        {products.slice(0, 10).map((product) => (
           <div 
-            key={`${product.id}-${idx}`} 
-            className={`shrink-0 w-44 md:w-full rounded-xl overflow-hidden flex flex-col ${shadowClass}`}
-            style={{ backgroundColor: colors.cor_detalhes_fundo, scrollSnapAlign: 'start' }}
+            key={product.id} 
+            className={`bg-white rounded-lg overflow-hidden flex flex-col h-full ${shadowClass}`}
+            style={{ backgroundColor: colors.cor_detalhes_fundo }}
           >
-            <div className="relative aspect-square">
-              <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+            {/* Imagem com proporção fixa */}
+            <div className="relative w-full" style={{ paddingTop: '100%' }}>
+              <img 
+                src={product.image_url} 
+                alt={product.name} 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
               {style.show_badge && product.badge && (
                 <span 
-                  className="absolute top-2 left-2 text-white text-xs font-bold px-2 py-1 rounded"
+                  className="absolute top-2 left-2 text-white text-[10px] md:text-xs font-bold px-2 py-1 rounded"
                   style={{ backgroundColor: colors.cor_botao_enviar_pedido }}
                 >
                   {product.badge === 'destaque' ? '⭐' : product.badge === 'novo' ? '🆕' : product.badge === 'promocao' ? '🔥' : '🏆'}
                 </span>
               )}
             </div>
-            <div className="p-3 md:p-4 flex flex-col flex-1">
+
+            {/* Info do produto - altura fixa para alinhamento */}
+            <div className="p-2 sm:p-3 md:p-4 flex flex-col flex-grow">
+              {/* Título - 2 linhas com altura fixa */}
               <h3 
-                className="font-medium text-gray-800"
-                style={{ 
-                  fontSize: 'clamp(0.875rem, 0.75rem + 0.5vw, 1.125rem)',
-                  lineHeight: '1.4',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  minHeight: '2.8em'
-                }}
+                className="font-medium text-gray-800 text-sm md:text-base leading-tight line-clamp-2"
+                style={{ minHeight: '2.5rem' }}
               >
                 {product.name}
               </h3>
-              <div className="mt-2 flex-1">
+
+              {/* Preço */}
+              <div className="mt-auto pt-2">
                 {product.original_price ? (
-                  <div className="flex flex-col">
-                    <span className="text-xs md:text-sm text-gray-400 line-through">
+                  <>
+                    <span className="text-xs text-gray-400 line-through block">
                       R$ {product.original_price.toFixed(2)}
                     </span>
                     <span 
-                      className="font-bold text-base md:text-lg lg:text-xl" 
+                      className="font-bold text-sm md:text-base lg:text-lg" 
                       style={{ color: colors.cor_botao_enviar_pedido }}
                     >
                       R$ {product.price.toFixed(2)}
                     </span>
-                  </div>
+                  </>
                 ) : (
                   <span 
-                    className="font-bold text-base md:text-lg lg:text-xl block" 
+                    className="font-bold text-sm md:text-base lg:text-lg" 
                     style={{ color: colors.cor_detalhes_gerais }}
                   >
                     R$ {product.price.toFixed(2)}
                   </span>
                 )}
               </div>
+
+              {/* Botão */}
               <button 
                 onClick={onAddCart}
-                className="mt-3 w-full py-2.5 md:py-3 rounded-lg text-sm md:text-base font-bold transition hover:opacity-90"
+                className="mt-2 md:mt-3 w-full py-2 md:py-2.5 rounded-md text-xs md:text-sm font-semibold transition hover:opacity-90"
                 style={getButtonStyle()}
               >
                 {btnText}

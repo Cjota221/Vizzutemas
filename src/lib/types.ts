@@ -127,10 +127,14 @@ export type ThemeBanner = {
   theme_id: string
   name: string
   image_desktop: string
-  image_mobile: string
-  link_url?: string
-  display_order: number
+  image_mobile?: string | null
+  link_url?: string | null
+  link_target?: '_self' | '_blank'
+  position?: 'home_main' | 'home_secondary' | 'category_top'
+  sort_order: number
   is_active: boolean
+  start_date?: string | null
+  end_date?: string | null
   created_at?: string
   updated_at?: string
 }
