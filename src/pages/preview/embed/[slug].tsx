@@ -961,7 +961,13 @@ export default function EmbedPreviewPage({
         {layout.sections
           .filter(s => s.enabled)
           .sort((a, b) => a.order - b.order)
-          .map((section, index) => (
+          .map((section, index) => {
+            // Debug: mostra informações da seção
+            if (section.type === 'widgets') {
+              const widgetIds = (section as any).widget_ids
+              console.log(`[SECTION ${index}] type=${section.type}, label="${section.label}", widget_ids=${JSON.stringify(widgetIds)}`)
+            }
+            return (
             <div key={`${section.id}-${section.order}`} className="section">
               
               {/* Banner Principal */}
@@ -992,23 +998,34 @@ export default function EmbedPreviewPage({
                           <WidgetRenderer key={widget.id} widget={widget} colors={colors} fonts={layout.fonts} />
                         ))
                     } else {
-                      // Fallback: se não tem widget_ids, tenta encontrar por nome na label
-                      const widgetName = section.label?.replace('Widgets: ', '').replace('Widgets HTML', '').trim()
+                      // Busca por nome na label da seção (mais flexível)
+                      const sectionLabel = section.label || ''
+                      
+                      // Remove prefixos comuns
+                      const widgetName = sectionLabel
+                        .replace(/^Widgets?:?\s*/i, '')
+                        .replace(/^Widget HTML:?\s*/i, '')
+                        .trim()
+                      
                       if (widgetName) {
-                        const matchingWidget = widgets.find(w => 
-                          w.name.toLowerCase() === widgetName.toLowerCase() && w.is_active
-                        )
+                        // Busca flexível: contém o nome (case insensitive)
+                        const matchingWidget = widgets.find(w => {
+                          const wName = w.name.toLowerCase().trim()
+                          const searchName = widgetName.toLowerCase().trim()
+                          return (wName === searchName || 
+                                  wName.includes(searchName) || 
+                                  searchName.includes(wName)) && 
+                                 w.is_active
+                        })
+                        
                         if (matchingWidget) {
                           return <WidgetRenderer key={matchingWidget.id} widget={matchingWidget} colors={colors} fonts={layout.fonts} />
                         }
                       }
-                      // Se ainda não encontrou, renderiza todos (compatibilidade)
-                      return widgets
-                        .filter(w => w.is_active)
-                        .sort((a, b) => a.display_order - b.display_order)
-                        .map(widget => (
-                          <WidgetRenderer key={widget.id} widget={widget} colors={colors} fonts={layout.fonts} />
-                        ))
+                      
+                      // Se não encontrou nada, não renderiza (evita duplicação)
+                      console.warn(`[WIDGETS] Seção "${sectionLabel}" não encontrou widget correspondente`)
+                      return null
                     }
                   })()}
                 </div>
@@ -1084,7 +1101,7 @@ export default function EmbedPreviewPage({
               )}
 
             </div>
-          ))
+          )})
         }
 
         {/* Footer */}

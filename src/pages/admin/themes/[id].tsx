@@ -420,14 +420,17 @@ export default function EditThemePage() {
       const banner = await createBanner({
         theme_id: theme.id, name: newBanner.name, image_desktop: newBanner.image_desktop,
         image_mobile: newBanner.image_mobile || newBanner.image_desktop,
-        link_url: newBanner.link_url, display_order: banners.length, is_active: true
+        link_url: newBanner.link_url, sort_order: banners.length, is_active: true
       })
       if (banner) {
         setBanners([...banners, banner])
         setNewBanner({ name: '', image_desktop: '', image_mobile: '', link_url: '' })
         showMessage('success', 'Banner adicionado!')
+      } else {
+        showMessage('error', 'Erro ao salvar banner no banco')
       }
     } catch (error) {
+      console.error('Erro ao adicionar banner:', error)
       showMessage('error', 'Erro ao adicionar banner')
     } finally {
       setSaving(false)
